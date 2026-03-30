@@ -97,17 +97,17 @@ export default function RegistrationForm() {
   }
 
   return (
-    <div className="w-full bg-black/50 min-h-screen flex items-center justify-center py-12 px-4 mt-16">
-      <div className="w-full max-w-2xl mb-12">
+    <div className="w-full  min-h-screen flex items-center justify-center py-12 px-4 mt-16">
+      <div className="w-full max-w-2xl">
         <Reveal direction="up" delay={0.2}>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">Registration Form</h1>
+          <h1 className="text-4xl font-bold text-white mb-12">Registration Form</h1>
         </Reveal>
 
         {/* Success Message */}
         {status === 'success' && (
           <Reveal direction="up" delay={0.3}>
             <div className="mb-8 p-4 bg-green-900/50 border border-green-500 rounded">
-              <p className="text-green-400 text-center font-medium">
+              <p className="text-green-400 font-medium">
                 ✓ Registration successful! We&apos;ll be in touch soon.
               </p>
             </div>
@@ -118,7 +118,7 @@ export default function RegistrationForm() {
         {status === 'error' && (
           <Reveal direction="up" delay={0.3}>
             <div className="mb-8 p-4 bg-red-900/50 border border-red-500 rounded">
-              <p className="text-red-400 text-center font-medium">
+              <p className="text-red-400 font-medium">
                 ✗ {errorMessage}
               </p>
             </div>
@@ -128,7 +128,7 @@ export default function RegistrationForm() {
         <form onSubmit={handleSubmit}>
           {/* Team Name */}
           <Reveal direction="up" delay={0.3}>
-            <div className="mb-6">
+            <div className="mb-8">
               <label className="block text-white text-sm font-medium mb-3">Team name</label>
               <input
                 type="text"
@@ -137,105 +137,105 @@ export default function RegistrationForm() {
                 onChange={handleChange}
                 placeholder="Afak"
                 disabled={status === 'submitting'}
-                className="w-full px-4 py-3 bg-[#1A1D21] border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#1A1D21] px-4 py-3 border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
           </Reveal>
 
           {/* Team Leader Information */}
           <Reveal direction="up" delay={0.4}>
-            <div className="mb-6">
+            <div className="mb-8">
               <h2 className="text-white text-sm font-medium mb-6 flex items-center">
-                <span className="mr-2" style={{ color: '#F9621D' }}>✦</span>
+                <span className="mr-2">•</span>
                 Team leader information
               </h2>
 
-              {/* First Name */}
-              <div className="mb-6">
-                <label className="block text-white text-sm font-medium mb-3">First Name</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  placeholder="Bilel"
-                  disabled={status === 'submitting'}
-                  className="w-full px-4 py-3 bg-[#1A1D21] border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                />
+              {/* First Name and Last Name */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-white text-sm font-medium mb-3">First Name</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    placeholder="Bilel"
+                    disabled={status === 'submitting'}
+                    className="w-full bg-[#1A1D21] px-4 py-3 border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-white text-sm font-medium mb-3">Last Name</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Abbes"
+                    disabled={status === 'submitting'}
+                    className="w-full bg-[#1A1D21] px-4 py-3 border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
               </div>
 
-              {/* Last Name */}
-              <div className="mb-6">
-                <label className="block text-white text-sm font-medium mb-3">Last Name</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  placeholder="Abbes"
-                  disabled={status === 'submitting'}
-                  className="w-full px-4 py-3 bg-[#1A1D21] border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                />
+              {/* Email and Phone Number */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-white text-sm font-medium mb-3">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="exemple@estin.dz"
+                    disabled={status === 'submitting'}
+                    className="w-full bg-[#1A1D21] px-4 py-3 border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-white text-sm font-medium mb-3">Phone number</label>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    placeholder="123456789"
+                    disabled={status === 'submitting'}
+                    className="w-full bg-[#1A1D21] px-4 py-3 border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
               </div>
 
-              {/* Email */}
-              <div className="mb-6">
-                <label className="block text-white text-sm font-medium mb-3">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="exemple@estin.dz"
-                  disabled={status === 'submitting'}
-                  className="w-full px-4 py-3 bg-[#1A1D21] border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-
-              {/* Phone Number */}
-              <div className="mb-6">
-                <label className="block text-white text-sm font-medium mb-3">Phone number</label>
-                <input
-                  type="tel"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  placeholder="123456789"
-                  disabled={status === 'submitting'}
-                  className="w-full px-4 py-3 bg-[#1A1D21] border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-
-              {/* University */}
-              <div className="mb-6">
-                <label className="block text-white text-sm font-medium mb-3">University</label>
-                <input
-                  type="text"
-                  name="university"
-                  value={formData.university}
-                  onChange={handleChange}
-                  placeholder="Estin"
-                  disabled={status === 'submitting'}
-                  className="w-full px-4 py-3 bg-[#1A1D21] border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-
-              {/* Specialty */}
-              <div className="mb-6">
-                <label className="block text-white text-sm font-medium mb-3">Specialty</label>
-                <input
-                  type="text"
-                  name="specialty"
-                  value={formData.specialty}
-                  onChange={handleChange}
-                  placeholder="Informatique"
-                  disabled={status === 'submitting'}
-                  className="w-full px-4 py-3 bg-[#1A1D21] border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                />
+              {/* University and Specialty */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-white text-sm font-medium mb-3">University</label>
+                  <input
+                    type="text"
+                    name="university"
+                    value={formData.university}
+                    onChange={handleChange}
+                    placeholder="Estin"
+                    disabled={status === 'submitting'}
+                    className="w-full bg-[#1A1D21] px-4 py-3 border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-white text-sm font-medium mb-3">Specialty</label>
+                  <input
+                    type="text"
+                    name="specialty"
+                    value={formData.specialty}
+                    onChange={handleChange}
+                    placeholder="Informatique"
+                    disabled={status === 'submitting'}
+                    className="w-full bg-[#1A1D21] px-4 py-3 border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
               </div>
 
               {/* Year */}
-              <div className="mb-6">
+              <div className="mb-8">
                 <label className="block text-white text-sm font-medium mb-3">Year</label>
                 <input
                   type="text"
@@ -244,7 +244,7 @@ export default function RegistrationForm() {
                   onChange={handleChange}
                   placeholder="2024"
                   disabled={status === 'submitting'}
-                  className="w-full px-4 py-3 bg-[#1A1D21] border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#1A1D21] px-4 py-3 border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -252,19 +252,19 @@ export default function RegistrationForm() {
 
           {/* Buttons */}
           <Reveal direction="up" delay={0.5}>
-            <div className="flex flex-col sm:flex-row gap-4 justify-end">
+            <div className="flex gap-4 justify-end">
               <button
                 type="button"
                 onClick={handleCancel}
                 disabled={status === 'submitting'}
-                className="w-full sm:w-auto px-8 py-3 bg-gray-700 text-white font-medium rounded hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-3 bg-gray-700 text-white font-medium rounded hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={status === 'submitting'}
-                className="w-full sm:w-auto px-8 py-3 bg-orange-500 text-white font-medium rounded hover:bg-orange-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="px-8 py-3 bg-orange-500 text-white font-medium rounded hover:bg-orange-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {status === 'submitting' ? (
                   <>
