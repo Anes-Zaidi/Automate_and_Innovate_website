@@ -3,36 +3,38 @@
 import { useEffect, useState } from 'react'
 
 export default function Countdown() {
-  const [time, setTime] = useState({ days: 52, hours: 0, minutes: 0, seconds: 0 })
+  const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [animateKey, setAnimateKey] = useState(0)
 
   useEffect(() => {
     // Trigger initial animation
- 
+    setAnimateKey(1)
+
+    // Event date: April 16, 2026
+    const eventDate = new Date('2026-04-16T00:00:00').getTime()
+
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime()
+      const difference = eventDate - now
+
+      if (difference <= 0) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 }
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24))
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000)
+
+      return { days, hours, minutes, seconds }
+    }
+
+    // Set initial value
+    setTime(calculateTimeLeft())
 
     const timer = setInterval(() => {
-      setTime((prev) => {
-        let { days, hours, minutes, seconds } = prev
-
-        if (seconds > 0) {
-          seconds--
-        } else if (minutes > 0) {
-          minutes--
-          seconds = 59
-        } else if (hours > 0) {
-          hours--
-          minutes = 59
-          seconds = 59
-        } else if (days > 0) {
-          days--
-          hours = 23
-          minutes = 59
-          seconds = 59
-        }
-
-        return { days, hours, minutes, seconds }
-      })
-    }, 1000 * 3600)
+      setTime(calculateTimeLeft())
+    }, 1000 * 60 * 60) // Update every hour
 
     return () => clearInterval(timer)
   }, [])

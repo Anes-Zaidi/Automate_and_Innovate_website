@@ -43,8 +43,10 @@ export default function Hero() {
           </div>
         </Reveal>
       </div>
-    
-        <Countdown />
+          <Reveal direction="up" delay={0.3}>
+            <Countdown />
+        </Reveal>
+   
      
       <Reveal className='flex justify-center items-center w-full' direction="up" delay={0.8}>
         <CTA />
