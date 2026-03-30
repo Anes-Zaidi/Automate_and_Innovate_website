@@ -1,0 +1,407 @@
+/* Global Animations for SOAI Automate Hackathon */
+
+/* Legacy animations - kept for backward compatibility */
+@keyframes fadeUpAnim {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blinkAnim {
+  0%, 50%, 100% {
+    opacity: 1;
+  }
+  25%, 75% {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeSlideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeSlideRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  65% {
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Legacy utility classes */
+.fade-up-item {
+  animation: fadeUpAnim 0.8s ease-out forwards;
+}
+
+.blink {
+  animation: blinkAnim 1s infinite;
+}
+
+.text-from-left {
+  animation: fadeSlideLeft 0.5s ease-out both;
+}
+
+.text-from-right {
+  animation: fadeSlideRight 0.5s ease-out both;
+}
+
+.circle-node {
+  animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Text fade in - no blur, just opacity */
+@keyframes textFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.text-fade-in {
+  animation: textFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   COUNTDOWN TIMER ANIMATIONS
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Timer Box - Base styles */
+.timer-box {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  border-width: 2px;
+  border-radius: 0.25rem;
+  font-size: 1.125rem;
+  transform: skewX(-15deg);
+}
+
+@media (min-width: 640px) {
+  .timer-box {
+    width: 4rem;
+    height: 4rem;
+    border-width: 3px;
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .timer-box {
+    font-size: 1.875rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .timer-box {
+    font-size: 2.25rem;
+  }
+}
+
+.timer-box:hover {
+  transform: skewX(-15deg) scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+/* Countdown scale animation for timer boxes */
+@keyframes timerBoxScale {
+  0% {
+    opacity: 0;
+    transform: skewX(-15deg) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: skewX(-15deg) scale(1);
+  }
+}
+
+.timer-box-animate {
+  animation: timerBoxScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Label fade up animation */
+@keyframes labelFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.label-animate {
+  animation: labelFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+.separator-animate {
+  animation: labelFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* Animation delay utilities */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+.delay-600 { animation-delay: 0.6s; }
+.delay-700 { animation-delay: 0.7s; }
+.delay-800 { animation-delay: 0.8s; }
+.delay-900 { animation-delay: 0.9s; }
+.delay-1000 { animation-delay: 1s; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   REVEAL ANIMATION SYSTEM
+   Smooth intersection-based animations with CSS transitions
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Base reveal styles - hidden state */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+/* Reveal variants */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(60px);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-down {
+  opacity: 0;
+  transform: translateY(-60px);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(80px);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(-80px);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-scale-up {
+  opacity: 0;
+  transform: scale(1.1);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-fade {
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity;
+}
+
+.reveal-rotate {
+  opacity: 0;
+  transform: rotate(-5deg) scale(0.95);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+/* Active (visible) state */
+.reveal.is-visible,
+.reveal-up.is-visible,
+.reveal-down.is-visible,
+.reveal-left.is-visible,
+.reveal-right.is-visible,
+.reveal-scale.is-visible,
+.reveal-scale-up.is-visible,
+.reveal-fade.is-visible,
+.reveal-rotate.is-visible {
+  opacity: 1;
+  transform: translateY(0) translateX(0) scale(1) rotate(0);
+}
+
+/* Staggered delay utilities */
+.reveal-delay-100 { transition-delay: 100ms; }
+.reveal-delay-200 { transition-delay: 200ms; }
+.reveal-delay-300 { transition-delay: 300ms; }
+.reveal-delay-400 { transition-delay: 400ms; }
+.reveal-delay-500 { transition-delay: 500ms; }
+.reveal-delay-600 { transition-delay: 600ms; }
+.reveal-delay-700 { transition-delay: 700ms; }
+.reveal-delay-800 { transition-delay: 800ms; }
+.reveal-delay-900 { transition-delay: 900ms; }
+.reveal-delay-1000 { transition-delay: 1000ms; }
+
+/* Special animation for title text */
+@keyframes textReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.text-reveal {
+  animation: textReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* Pulse glow animation for accent elements */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(249, 98, 29, 0.3),
+                0 0 40px rgba(249, 98, 29, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(249, 98, 29, 0.5),
+                0 0 60px rgba(249, 98, 29, 0.2);
+  }
+}
+
+.pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Slide in from side with arc motion */
+@keyframes slideInArc {
+  0% {
+    opacity: 0;
+    transform: translateX(-100px) translateY(20px);
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+.slide-in-arc {
+  animation: slideInArc 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Zoom with fade effect */
+@keyframes zoomFade {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.zoom-fade {
+  animation: zoomFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Elegant fade up with slight scale */
+@keyframes fadeUpScale {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fade-up-scale {
+  animation: fadeUpScale 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Smooth border draw animation */
+@keyframes borderDraw {
+  0% {
+    box-shadow: 0 0 0 0 rgba(249, 98, 29, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 2px rgba(249, 98, 29, 0.3),
+                0 0 40px rgba(249, 98, 29, 0.1);
+  }
+}
+
+.border-draw {
+  animation: borderDraw 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Gradient shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(249, 98, 29, 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 3s infinite;
+}

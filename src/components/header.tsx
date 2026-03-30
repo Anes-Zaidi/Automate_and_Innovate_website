@@ -9,13 +9,13 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <header className="fixed top-0 w-full z-50 border-b" style={{ backgroundColor: '#0A0A0A', borderColor: 'rgba(249, 98, 29, 0.15)' }}>
+    <header className="fixed top-0 w-full z-50 border-b fade-up-item" style={{ backgroundColor: '#0A0A0A', borderColor: 'rgba(249, 98, 29, 0.15)' }}>
       <div className=" mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 ">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 font-bold text-white hover:opacity-80 transition-opacity">
             <Image src="/logo.svg" alt="SOAI" width={40} height={40}  />
-          
+
           </Link>
 
           {/* Desktop Navigation */}
@@ -50,7 +50,7 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <nav className="md:hidden pb-4 space-y-2 border-t" style={{ borderColor: 'rgba(249, 98, 29, 0.15)' }}>
+          <nav className="md:hidden pb-4 space-y-2 border-t fade-up-item" style={{ borderColor: 'rgba(249, 98, 29, 0.15)', animationDelay: '0.2s' }}>
             <Link href="/" className="block text-white hover:text-[#F9C673] transition-colors py-2 text-sm">
               Home
             </Link>

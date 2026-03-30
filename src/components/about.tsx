@@ -1,19 +1,22 @@
 import Image from 'next/image'
+import Reveal from '@/components/ui/reveal'
 
 export default function About() {
   return (
     <div className="relative z-10 pt-32 pb-20 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Page Title */}
-        <h1
-          className="text-5xl sm:text-6xl md:text-7xl font-bold text-center mb-16 sm:mb-24"
-          style={{ color: '#F9C673' }}
-        >
-          About Us
-        </h1>
+        <Reveal direction="scale" delay={0.2}>
+          <h1
+            className="text-5xl sm:text-6xl md:text-7xl font-bold text-center mb-16 sm:mb-24"
+            style={{ color: '#F9C673' }}
+          >
+            About Us
+          </h1>
+        </Reveal>
 
         {/* The Club Section */}
-        <section className="mb-16 sm:mb-24">
+        <Reveal direction="right" delay={0.3}>
           <div className="flex flex-row gap-8 md:gap-12 items-center">
             {/* Logo Circle */}
             <div className="flex justify-center md:justify-start order-1 md:order-1">
@@ -41,18 +44,18 @@ export default function About() {
               </p>
             </div>
           </div>
-        </section>
+        </Reveal>
 
         {/* The Vision Section */}
-        <section className="mb-20 sm:mb-32">
+        <Reveal direction="left" delay={0.5}>
           {/* Vision Header and Intro with Image */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 mb-12">
             {/* Left Column - Vision Header and Text */}
             <div className="lg:col-span-2">
               <div className="flex items-start gap-4 mb-8">
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white pt-2">
-                               <span style={{ color: '#F9621D' }} className="flex-shrink-0 leading-none">✦</span>
-   The Vision:
+                  <span style={{ color: '#F9621D' }} className="flex-shrink-0 leading-none">✦</span>
+                  The Vision:
                 </h2>
               </div>
 
@@ -69,10 +72,7 @@ export default function About() {
 
             {/* Right Column - Image */}
             <div className="lg:col-span-1 flex items-start justify-center lg:justify-end">
-              <div
-                className="w-full h-56 sm:h-64 md:h-72 lg:h-80 relative overflow-hidden flex-shrink-0"
-           
-              >
+              <div className="w-full h-56 sm:h-64 md:h-72 lg:h-80 relative overflow-hidden flex-shrink-0">
                 <Image
                   src="/two-guys.png"
                   alt="Professionals collaborating on a project"
@@ -87,47 +87,42 @@ export default function About() {
           {/* Vision Pillars - Full Width */}
           <div className="space-y-6">
             {/* Pillar 1 */}
-            <div>
+            <Reveal direction="up" delay={0.7}>
               <div className="flex items-center gap-3 mb-3">
-             
                 <h3 className="text-xl sm:text-2xl font-bold text-white">
-                    <span style={{ color: '#F9621D' }} className="">✦</span> Speed as a Feature
+                  <span style={{ color: '#F9621D' }} className="">✦</span> Speed as a Feature
                 </h3>
               </div>
               <p className="text-gray-300 text-base sm:text-lg leading-relaxed ml-6">
                 We want to move the ESTIN community from 'learning to code' to 'learning to launch'. By utilizing n8n as a state-of-the-art backend, we empower our students to build industrial-grade logic at a fraction of the traditional time. We believe the speed of your tools should match the speed of your ideas.
               </p>
-            </div>
+            </Reveal>
 
             {/* Pillar 2 */}
-            <div>
+            <Reveal direction="up" delay={0.8}>
               <div className="flex items-center gap-3 mb-3">
-            
                 <h3 className="text-xl sm:text-2xl font-bold text-white">
-                   <span style={{ color: '#F9621D' }} className="">✦</span>   Augmenting Human Creativity
+                  <span style={{ color: '#F9621D' }} className="">✦</span> Augmenting Human Creativity
                 </h3>
               </div>
               <p className="text-gray-300 text-base sm:text-lg leading-relaxed ml-6">
                 Through AI-Assisted Development, we are shifting the focus from syntax mastery to structural vision. We envision a future where students use AI as a collaborative partner to deliver high-end user experiences, allowing them to spend more time on innovation and less on debugging.
               </p>
-            </div>
+            </Reveal>
 
             {/* Pillar 3 */}
-            <div>
+            <Reveal direction="up" delay={0.9}>
               <div className="flex items-center gap-3 mb-3">
-              
                 <h3 className="text-xl sm:text-2xl font-bold text-white">
-                <span style={{ color: '#F9621D' }} className="">✦</span>    Impact Over Code
+                  <span style={{ color: '#F9621D' }} className="">✦</span> Impact Over Code
                 </h3>
               </div>
               <p className="text-gray-300 text-base sm:text-lg leading-relaxed ml-6">
                 The ultimate goal isn't just a working script; it's a solved problem. By concluding with a Public Pitch, our vision is to transform CS students into founders. We aren't just building apps; we are building the next generation of Algerian AI startups.
               </p>
-            </div>
+            </Reveal>
           </div>
-        </section>
-
-
+        </Reveal>
       </div>
     </div>
   )

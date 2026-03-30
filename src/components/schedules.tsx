@@ -1,23 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import Reveal from '@/components/ui/reveal'
 
 // ─── Path builder ─────────────────────────────────────────────────────────────
-//
-// ONE unbroken d-string — no M jumps mid-path.
-// The line travels:
-//   tip (above circle 0)
-//   → straight down through circle 0  (hidden behind the div)
-//   → Bézier sweep to circle 1
-//   → straight down through circle 1
-//   → Bézier sweep to circle 2  …etc.
-//
-// Because it's a single sub-path, stroke-dashoffset draws it as one line.
-//
-// HOW TO TUNE cpRatio:
-//   0.55 (default) – long vertical sections, tight mid-sweep
-//   0.35            – shorter verticals, wider bow in the middle
-//
 function buildPath(
   circles: { cx: number; top: number; bottom: number }[],
   cpRatio = 0.55,
@@ -26,7 +12,6 @@ function buildPath(
 
   const first = circles[0]
 
-  // Start at the tip dot, go straight down into and through the first circle
   let d = `M ${first.cx} ${first.top - 100} L ${first.cx} ${first.bottom}`
 
   for (let i = 0; i < circles.length - 1; i++) {
@@ -34,27 +19,23 @@ function buildPath(
     const to   = circles[i + 1]
 
     const x0 = from.cx
-    const y0 = from.bottom   // exit: bottom of current circle
+    const y0 = from.bottom
 
     const x1 = to.cx
-    const y1 = to.top        // entry: top of next circle
+    const y1 = to.top
 
     const dy = y1 - y0
 
-    // CP1: directly below exit → vertical departure
     const cp1x = x0
     const cp1y = y0 + dy * cpRatio
 
-    // CP2: directly above entry → vertical arrival
     const cp2x = x1
     const cp2y = y1 - dy * cpRatio
 
-    // Bézier to the top of next circle, then straight down through it
     d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x1} ${y1}`
     d += ` L ${x1} ${to.bottom}`
   }
 
-  // Exit: straight tail below the last circle, same length as the entry antenna
   const last = circles[circles.length - 1]
   d += ` L ${last.cx} ${last.bottom + 100}`
 
@@ -103,14 +84,14 @@ export default function Schedules() {
   const [svgW,       setSvgW]       = useState(0)
   const [svgH,       setSvgH]       = useState(0)
   const [totalLen,   setTotalLen]   = useState(0)
-  const [drawn,      setDrawn]      = useState(0)   // how many px of the path are visible
+  const [drawn,      setDrawn]      = useState(0)
   const [dotPos,     setDotPos]     = useState({ x: 0, y: 0 })
   const [tipX,       setTipX]       = useState(0)
   const [tipY,       setTipY]       = useState(0)
   const [tailX,      setTailX]      = useState(0)
   const [tailY,      setTailY]      = useState(0)
+  const [activeCircle, setActiveCircle] = useState(-1)
 
-  // ── Rebuild path whenever layout changes ─────────────────────────────────
   const recalculate = useCallback(() => {
     const container = containerRef.current
     if (!container) return
@@ -142,15 +123,14 @@ export default function Schedules() {
     setTailY(last.bottom + 100)
     setPathD(buildPath(circleData))
     setDrawn(0)
+    setActiveCircle(-1)
   }, [])
 
-  // ── Resolve total length after path renders ───────────────────────────────
   useEffect(() => {
     if (!pathD || !pathRef.current) return
     setTotalLen(pathRef.current.getTotalLength())
   }, [pathD])
 
-  // ── Scroll → draw ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (totalLen === 0 || !pathRef.current) return
 
@@ -161,8 +141,6 @@ export default function Schedules() {
       const rect   = container.getBoundingClientRect()
       const vh     = window.innerHeight
 
-      // progress: 0 when top of container is at 80% viewport height,
-      //           1 when bottom of container has scrolled to 20% viewport height
       const start  = rect.top  - vh * 0.8
       const end    = rect.bottom - vh * 0.2
       const raw    = Math.min(Math.max(-start / (end - start), 0), 1)
@@ -170,7 +148,42 @@ export default function Schedules() {
       const newDrawn = raw * totalLen
       setDrawn(newDrawn)
 
-      // Move the dot to the current tip of the drawn line
+      // Calculate which circle the line has reached
+      const circleElements = circleRefs.current.filter(Boolean)
+      
+      // Find which circle we've reached based on line position
+      let reachedCircle = -1
+      for (let i = 0; i < circleElements.length; i++) {
+        const el = circleElements[i]
+        if (!el) continue
+        
+        const r = el.getBoundingClientRect()
+        const circleY = r.top - rect.top + r.height / 2
+        
+        // Get the Y position of the line at this circle's horizontal position
+        const circleX = r.left - rect.left + r.width / 2
+        let pointAtCircle
+        try {
+          // Find the point on the path closest to this circle
+          for (let len = 0; len <= newDrawn; len += 10) {
+            const pt = pathRef.current.getPointAtLength(len)
+            if (Math.abs(pt.y - circleY) < 2.5) {
+              pointAtCircle = len
+              break
+            }
+          }
+        } catch (e) {
+          continue
+        }
+        
+        // Circle is reached when the line has drawn past it
+        if (pointAtCircle !== undefined && newDrawn >= pointAtCircle) {
+          reachedCircle = i
+        }
+      }
+      
+      setActiveCircle(reachedCircle)
+
       if (newDrawn > 0) {
         const pt = pathRef.current.getPointAtLength(Math.min(newDrawn, totalLen - 0.1))
         setDotPos({ x: pt.x, y: pt.y })
@@ -186,7 +199,6 @@ export default function Schedules() {
     }
   }, [totalLen])
 
-  // ── ResizeObserver ────────────────────────────────────────────────────────
   useEffect(() => {
     recalculate()
     const ro = new ResizeObserver(recalculate)
@@ -194,39 +206,21 @@ export default function Schedules() {
     return () => ro.disconnect()
   }, [recalculate])
 
-  // strokeDashoffset trick: array = totalLen, offset = totalLen - drawn
   const dashArray  = totalLen || 9999
   const dashOffset = Math.max(dashArray - drawn, 0)
   const showDot    = drawn > 1
 
   return (
     <div className="relative w-full py-24 px-4 sm:px-6 overflow-hidden">
-      <style>{`
-        @keyframes popIn {
-          0%   { opacity: 0; transform: scale(0.5); }
-          65%  { transform: scale(1.06); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes fadeSlideLeft {
-          from { opacity: 0; transform: translateX(-20px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes fadeSlideRight {
-          from { opacity: 0; transform: translateX(20px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-        .circle-node     { animation: popIn         0.6s cubic-bezier(.34,1.56,.64,1) both; }
-        .text-from-left  { animation: fadeSlideLeft  0.5s ease-out both; }
-        .text-from-right { animation: fadeSlideRight 0.5s ease-out both; }
-      `}</style>
-
       <div className="max-w-7xl mx-auto">
-        <h2
-          className="text-4xl font-bold text-center mb-20 tracking-tight"
-          style={{ color: '#F4C430' }}
-        >
-          Schedules &amp; Training
-        </h2>
+        <Reveal direction="scale" delay={0.2}>
+          <h2
+            className="text-4xl font-bold text-center mb-20 tracking-tight"
+            style={{ color: '#F4C430' }}
+          >
+            Schedules &amp; Training
+          </h2>
+        </Reveal>
 
         <div ref={containerRef} className="relative" style={{ paddingTop: '80px' }}>
 
@@ -250,7 +244,7 @@ export default function Schedules() {
                 </filter>
               </defs>
 
-              {/* Faint full-path ghost so user can see where the line will go */}
+              {/* Faint full-path ghost */}
               <path
                 d={pathD}
                 fill="none"
@@ -260,7 +254,7 @@ export default function Schedules() {
                 strokeLinecap="round"
               />
 
-              {/* Glow layer — same single path, thicker + blurred */}
+              {/* Glow layer */}
               <path
                 d={pathD}
                 fill="none"
@@ -273,7 +267,7 @@ export default function Schedules() {
                 strokeDashoffset={dashOffset}
               />
 
-              {/* Main crisp line — the one whose length getTotalLength reads */}
+              {/* Main crisp line */}
               <path
                 ref={pathRef}
                 d={pathD}
@@ -285,7 +279,7 @@ export default function Schedules() {
                 strokeDashoffset={dashOffset}
               />
 
-              {/* Tip dot — follows the drawing head */}
+              {/* Tip dot */}
               {showDot && (
                 <>
                   <circle cx={dotPos.x} cy={dotPos.y} r={6}  fill="#FF6B35" />
@@ -294,7 +288,7 @@ export default function Schedules() {
                 </>
               )}
 
-              {/* Static tip dot at the very top (antenna cap) */}
+              {/* Static tip dot */}
               {totalLen > 0 && (
                 <>
                   <circle cx={tipX} cy={tipY} r={5} fill="#FF6B35" opacity={0.9} />
@@ -303,7 +297,7 @@ export default function Schedules() {
                 </>
               )}
 
-              {/* Static tail dot at the very bottom — appears when fully drawn */}
+              {/* Static tail dot */}
               {drawn >= totalLen * 0.97 && totalLen > 0 && (
                 <>
                   <circle cx={tailX} cy={tailY} r={5} fill="#FF6B35"
@@ -328,52 +322,55 @@ export default function Schedules() {
                   {/* Circle */}
                   <div
                     ref={(el) => { circleRefs.current[i] = el }}
-                    className="circle-node flex-shrink-0
+                    className={`circle-node flex-shrink-0
                                w-36 h-36 sm:w-44 sm:h-44
                                rounded-full border-2
                                flex items-center justify-center text-center
-                               cursor-default select-none"
+                               cursor-default select-none
+                               transition-all duration-500 ease-out`}
                     style={{
-                      borderColor:     '#FF6B35',
+                      borderColor:     activeCircle >= i ? '#FF6B35' : 'transparent',
                       backgroundColor: '#16191F',
-                      animationDelay:  `${0.1 + i * 1.0}s`,
-                      boxShadow:       '0 0 0 1px rgba(255,107,53,0.12), 0 0 40px rgba(255,107,53,0.10)',
+                      boxShadow:       activeCircle >= i 
+                        ? '0 0 0 1px rgba(255,107,53,0.12), 0 0 40px rgba(255,107,53,0.3)' 
+                        : 'none',
                     }}
                   >
                     <span
                       className="text-xl sm:text-2xl font-bold leading-tight px-3"
-                      style={{ color: '#FF6B35' }}
+                      style={{ color: activeCircle >= i ? '#FF6B35' : 'rgba(255,107,53,0.3)' }}
                     >
                       {event.day}
                     </span>
                   </div>
 
                   {/* Text */}
-                  <div
-                    className={`flex-1 ${isRight ? 'text-from-right text-right' : 'text-from-left'}`}
-                    style={{ animationDelay: `${0.3 + i * 1.0}s` }}
-                  >
-                    <h3 className="text-xl sm:text-2xl font-bold mb-4 text-white tracking-tight">
-                      {event.title}
-                    </h3>
-                    <ul className="space-y-2">
-                      {event.items.map((item, j) => (
-                        <li
-                          key={j}
-                          className={`text-sm text-gray-300 leading-relaxed flex gap-2 items-baseline
-                                      ${isRight ? 'flex-row-reverse' : ''}`}
-                        >
-                          <span style={{ color: '#FF6B35', flexShrink: 0 }}>✦</span>
-                          <span>
-                            {item.time && (
-                              <span className="font-semibold text-white">{item.time}:&nbsp;</span>
-                            )}
-                            {item.desc}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  <Reveal direction="up" delay={0.3 + i * 0.2}>
+                    <div
+                      className={`flex-1 ${isRight ? 'text-from-right text-right' : 'text-from-left'}`}
+                    >
+                      <h3 className="text-xl sm:text-2xl font-bold mb-4 text-white tracking-tight">
+                        {event.title}
+                      </h3>
+                      <ul className="space-y-2">
+                        {event.items.map((item, j) => (
+                          <li
+                            key={j}
+                            className={`text-sm text-gray-300 leading-relaxed flex gap-2 items-baseline
+                                        ${isRight ? 'flex-row-reverse' : ''}`}
+                          >
+                            <span style={{ color: '#FF6B35', flexShrink: 0 }}>✦</span>
+                            <span>
+                              {item.time && (
+                                <span className="font-semibold text-white">{item.time}:&nbsp;</span>
+                              )}
+                              {item.desc}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </Reveal>
                 </div>
               )
             })}

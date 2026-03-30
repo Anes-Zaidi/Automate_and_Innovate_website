@@ -59,8 +59,7 @@ export default function Home() {
       <div className="relative h-[70vh] z-10 flex-1 flex items-center justify-center w-full pt-28 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 border-b " style={{ borderColor: '#FF6B35' }}>
         <div className="w-full h-[70vh] flex flex-col items-center justify-center gap-12">
           <Hero />
-          <Countdown />
-          <CTA />
+       
         </div>
       </div>
 
