@@ -25,12 +25,13 @@ export default function Visitors() {
         </Reveal>
 
         <Reveal direction="up" delay={0.6}>
-          <button
-            className="px-8 py-3 rounded font-semibold hover:opacity-90 transition"
+          <a
+            href="/register"
+            className="inline-block px-8 py-3 rounded font-semibold hover:opacity-90 transition"
             style={{ backgroundColor: '#FF6B35', color: '#0C0F14' }}
           >
             Register for Demo Day
-          </button>
+          </a>
         </Reveal>
       </div>
     </section>

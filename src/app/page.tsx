@@ -56,32 +56,44 @@ export default function Home() {
       <Header />
 
       {/* Hero Section with Max Width Container */}
-      <div className="relative h-[70vh] z-10 flex-1 flex items-center justify-center w-full pt-28 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 border-b " style={{ borderColor: '#FF6B35' }}>
+      <div id="home" className="relative h-[70vh] z-10 flex-1 flex items-center justify-center w-full pt-28 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 border-b " style={{ borderColor: '#FF6B35' }}>
         <div className="w-full h-[70vh] flex flex-col items-center justify-center gap-12">
           <Hero />
-       
+
         </div>
       </div>
 
       {/* About Section */}
-      <About />
+      <div id="about">
+        <About />
+      </div>
 
       {/* Sponsors Section */}
-      <Sponsors />
+      <div id="sponsors">
+        <Sponsors />
+      </div>
 
       {/* Schedules Section */}
-      <Schedules />
+      <div id="schedule">
+        <Schedules />
+      </div>
 
      {/* Training Tracks Section */}
-      <TrainingTracks />
-      
-      {/* Speakers & Mentors Section */}
-      <Speakers />
+      <div id="tracks">
+        <TrainingTracks />
+      </div>
 
- 
+      {/* Speakers & Mentors Section */}
+      <div id="speakers">
+        <Speakers />
+      </div>
+
+
 
       {/* Visitors Section */}
-      <Visitors />
+      <div id="visitors">
+        <Visitors />
+      </div>
 
       {/* Footer */}
       <Footer />

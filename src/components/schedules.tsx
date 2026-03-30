@@ -213,7 +213,7 @@ export default function Schedules() {
   return (
     <div className="relative w-full py-24 px-4 sm:px-6 overflow-hidden">
       <div className="max-w-7xl mx-auto">
-        <Reveal direction="scale" delay={0.2}>
+        <Reveal direction="up" delay={0.2}>
           <h2
             className="text-4xl font-bold text-center mb-20 tracking-tight"
             style={{ color: '#F4C430' }}

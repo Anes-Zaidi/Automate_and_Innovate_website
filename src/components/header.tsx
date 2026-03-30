@@ -20,15 +20,28 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-sm text-white hover:text-[#F9C673] transition-colors border-b-2  border-[#F9C673] pb-1">
+            <a href="/#home" className="text-sm text-white hover:text-[#F9C673] transition-colors border-b-2  border-[#F9C673] pb-1 cursor-pointer">
               Home
-            </Link>
-            <Link href="/about" className="text-sm text-gray-400 hover:text-white transition-colors">
+            </a>
+            <a href="/#about" className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer">
               About Us
-            </Link>
-            <Link href="#" className="text-sm text-gray-400 hover:text-white transition-colors">
-              Contact
-            </Link>
+            </a>
+                  <a href="/#sponsors" className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer">
+              Sponsors
+            </a>
+            <a href="/#schedule" className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer">
+              Schedule
+            </a>
+            <a href="/#tracks" className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer">
+              Tracks
+            </a>
+            <a href="/#speakers" className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer">
+              Speakers
+            </a>
+      
+            <a href="/#visitors" className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer">
+              Visitors
+            </a>
           </nav>
           {/* Mobile Menu Button */}
           <button
@@ -40,32 +53,46 @@ export default function Header() {
           </button>
 
           {/* Register Button */}
-          <button
+          <a
+            href="/register"
             className="hidden sm:inline px-4 sm:px-6 py-2 text-sm sm:text-base font-semibold rounded transition-opacity hover:opacity-90"
             style={{ backgroundColor: '#F9621D', color: '#0C0F14' }}
           >
             Register
-          </button>
+          </a>
         </div>
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <nav className="md:hidden pb-4 space-y-2 border-t fade-up-item" style={{ borderColor: 'rgba(249, 98, 29, 0.15)', animationDelay: '0.2s' }}>
-            <Link href="/" className="block text-white hover:text-[#F9C673] transition-colors py-2 text-sm">
+          <nav className="md:hidden pb-4 space-y-2 border-t " style={{ borderColor: 'rgba(249, 98, 29, 0.15)', animationDelay: '0.2s' }}>
+            <a href="/#home" className="block text-white hover:text-[#F9C673] transition-colors py-2 text-sm cursor-pointer">
               Home
-            </Link>
-            <Link href="/about" className="block text-gray-400 hover:text-white transition-colors py-2 text-sm">
+            </a>
+            <a href="/#about" className="block text-gray-400 hover:text-white transition-colors py-2 text-sm cursor-pointer">
               About Us
-            </Link>
-            <Link href="#" className="block text-gray-400 hover:text-white transition-colors py-2 text-sm">
-              Contact
-            </Link>
-            <button
-              className="w-full mt-2 px-4 py-2 text-sm font-semibold rounded transition-opacity hover:opacity-90"
+            </a>
+            <a href="/#schedule" className="block text-gray-400 hover:text-white transition-colors py-2 text-sm cursor-pointer">
+              Schedule
+            </a>
+            <a href="/#tracks" className="block text-gray-400 hover:text-white transition-colors py-2 text-sm cursor-pointer">
+              Tracks
+            </a>
+            <a href="/#speakers" className="block text-gray-400 hover:text-white transition-colors py-2 text-sm cursor-pointer">
+              Speakers
+            </a>
+            <a href="/#sponsors" className="block text-gray-400 hover:text-white transition-colors py-2 text-sm cursor-pointer">
+              Sponsors
+            </a>
+            <a href="/#visitors" className="block text-gray-400 hover:text-white transition-colors py-2 text-sm cursor-pointer">
+              Visitors
+            </a>
+            <a
+              href="/register"
+              className="w-full mt-2 px-4 py-2 text-sm font-semibold rounded transition-opacity hover:opacity-90 block text-center"
               style={{ backgroundColor: '#F9621D', color: '#0C0F14' }}
             >
               Register
-            </button>
+            </a>
           </nav>
         )}
       </div>

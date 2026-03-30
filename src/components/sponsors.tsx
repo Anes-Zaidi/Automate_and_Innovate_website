@@ -1,4 +1,5 @@
-import { Button } from '@/components/ui/button'
+'use client'
+
 import Reveal from '@/components/ui/reveal'
 
 export default function Sponsors() {
@@ -29,7 +30,7 @@ export default function Sponsors() {
           </Reveal>
 
           {/* Golden Sponsor (Featured) */}
-          <Reveal direction="up" delay={0.5}>
+          <Reveal direction="up" delay={0.4}>
             <div className="flex flex-col relative -top-16 items-center gap-4">
               <p className="text-xl font-semibold" style={{ color: '#F4C430' }}>
                 Golden
@@ -45,7 +46,7 @@ export default function Sponsors() {
           </Reveal>
 
           {/* Bronze Sponsor */}
-          <Reveal direction="left" delay={0.7}>
+          <Reveal direction="left" delay={0.6}>
             <div className="flex flex-col items-center gap-4">
               <p className="text-xl font-semibold" style={{ color: '#CD7F32' }}>
                 Bronze
@@ -62,7 +63,7 @@ export default function Sponsors() {
         </div>
 
         {/* Partnership CTA */}
-        <Reveal direction="up" delay={0.9}>
+        <Reveal direction="up" delay={0.8}>
           <div className="text-center max-w-2xl mx-auto">
             <h3 className="text-2xl sm:text-3xl font-bold mb-6 text-white">You want to be a partnarie?</h3>
             <p className="text-gray-400 text-base sm:text-lg mb-8 leading-relaxed">
@@ -71,15 +72,13 @@ export default function Sponsors() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="px-8 py-3 rounded-md text-[#0C0F14] font-semibold" style={{ backgroundColor: '#FF6B35' }}>
-                Be A Partenaire
-              </Button>
-              <Button
-                className="px-8 py-3 rounded-md text-white font-semibold border-2"
+              <a
+                href="#about"
+                className="px-8 py-3 rounded-md text-white font-semibold border-2 inline-block text-center transition-opacity hover:opacity-90"
                 style={{ borderColor: '#FF6B35', color: '#FF6B35' }}
               >
                 Learn More
-              </Button>
+              </a>
             </div>
           </div>
         </Reveal>

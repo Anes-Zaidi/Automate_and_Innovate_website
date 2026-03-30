@@ -38,7 +38,9 @@ export default function Speakers() {
                 Lorem ipsum dolor sit amet, consectetur adipisicing elit. Etiam eu turpis molestie, dictum est a, mattis tellus. Sed dignissim, metus nec fringilla accumsan, risus sem sollicitudin lacus, ut interdum tellus elit sed risus. Maecenas eget condimentum velit, sit amet feugiat lectus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent auctor purus luctus enim egestas, ac scelerisque ante pulvinar. Donec ut rhoncus ex. Suspendisse ac rhoncus nisl, eu tempor urma. Curabitur vel bibendum lorem.
               </p>
               <a
-                href="#"
+                href="https://www.linkedin.com/company/school-of-ai-bejaia/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-block px-8 py-3 rounded font-semibold hover:opacity-90 transition"
                 style={{ backgroundColor: '#FF6B35', color: '#0C0F14' }}
               >

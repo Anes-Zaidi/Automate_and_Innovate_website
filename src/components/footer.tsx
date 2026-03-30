@@ -34,22 +34,22 @@ export default function Footer() {
               <h3 className="text-white font-semibold text-lg">Quick Links</h3>
               <ul className="space-y-2">
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <a href="#home" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
                     Home
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <a href="#about" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
                     About Us
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <a href="#sponsors" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
                     Sponsors
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <a href="#schedule" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
                     Schedule
                   </a>
                 </li>
@@ -63,17 +63,17 @@ export default function Footer() {
               <h3 className="text-white font-semibold text-lg invisible">Links</h3>
               <ul className="space-y-2">
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <a href="#tracks" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
                     Tracks
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <a href="#speakers" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
                     Mentors
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <a href="#visitors" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
                     Visitors
                   </a>
                 </li>
