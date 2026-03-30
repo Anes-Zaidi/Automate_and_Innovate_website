@@ -5,7 +5,7 @@ import Reveal from '@/components/ui/reveal'
 
 export default function Hero() {
   return (
-    <>
+    <div className='flex flex-col justify-center items-center gap-12 max-w-7xl'>
       <div className="flex flex-col items-center justify-center text-center">
         {/* Main Title - on single row */}
         <Reveal direction="scale" delay={0.1}>
@@ -46,9 +46,9 @@ export default function Hero() {
     
         <Countdown />
      
-      <Reveal direction="up" delay={0.8}>
+      <Reveal className='flex justify-center items-center w-full' direction="up" delay={0.8}>
         <CTA />
       </Reveal>
-    </>
+    </div>
   )
 }
