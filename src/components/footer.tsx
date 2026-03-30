@@ -100,21 +100,27 @@ export default function Footer() {
                 <h3 className="text-white font-semibold text-lg">Follow Us</h3>
                 <div className="flex gap-4">
                   <a
-                    href="#"
+                    href="https://www.instagram.com/soai_bejaia/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110"
                     title="Instagram"
                   >
                     <Image src="/insta.svg" alt="Instagram" width={40} height={40} />
                   </a>
                   <a
-                    href="#"
+                    href="https://www.linkedin.com/company/school-of-ai-bejaia/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110"
                     title="LinkedIn"
                   >
                     <Image src="/linkedin.svg" alt="LinkedIn" width={40} height={40} />
                   </a>
                   <a
-                    href="#"
+                    href="https://www.facebook.com/profile.php?id=100086557760208"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110"
                     title="Facebook"
                   >
