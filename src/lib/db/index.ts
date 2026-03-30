@@ -1,16 +1,19 @@
-import { neon } from '@neondatabase/serverless'
-import { drizzle } from 'drizzle-orm/neon-http'
+import { Pool } from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import * as schema from './schema'
 
 export function getDb() {
   const databaseUrl = process.env.DATABASE_URL
-  
+
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL environment variable is not set. Please check your .env.local file.')
+    throw new Error('DATABASE_URL environment variable is not set. Please check your .env file.')
   }
-  
-  const sql = neon(databaseUrl)
-  return drizzle(sql, { schema })
+
+  const pool = new Pool({
+    connectionString: databaseUrl,
+  })
+
+  return drizzle(pool, { schema })
 }
 
 export * from './schema'

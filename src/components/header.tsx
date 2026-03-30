@@ -14,8 +14,14 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 ">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 font-bold text-white hover:opacity-80 transition-opacity">
-            <Image src="/logo.svg" alt="SOAI" width={40} height={40}  />
-
+            <Image
+              src="/logo.svg"
+              alt="SOAI"
+              width={40}
+              height={40}
+              loading="eager"
+              className="w-auto h-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}

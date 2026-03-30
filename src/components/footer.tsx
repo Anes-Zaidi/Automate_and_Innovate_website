@@ -18,7 +18,7 @@ export default function Footer() {
                   alt="SOAI"
                   width={32}
                   height={32}
-                  className="w-8 h-8"
+                  className="w-auto h-auto"
                 />
                 <div>
                   <p className="text-white font-bold">Automate</p>

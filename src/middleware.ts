@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { generateCSRFToken, getCSRFToken, validateCSRFToken } from '@/lib/csrf'
 
 // Simple in-memory store for rate limiting
 // In production, use a distributed store like Redis or Upstash
@@ -171,7 +172,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   return response
 }
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const ip = getClientIp(req)
   const userAgent = req.headers.get('user-agent')
   const pathname = req.nextUrl.pathname
@@ -217,10 +218,44 @@ export function middleware(req: NextRequest) {
         }
       )
     }
+
+    // CSRF protection for state-changing requests
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+      const isValid = await validateCSRFToken(req)
+      if (!isValid) {
+        console.warn(`🛡️ CSRF validation failed from IP: ${ip}`)
+        return new NextResponse(
+          JSON.stringify({ error: 'Forbidden - Invalid CSRF token' }),
+          {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
+      }
+    }
   }
 
   // Continue to the next middleware/route
-  const response = NextResponse.next()
+  let response = NextResponse.next()
+
+  // Add CSRF token to responses for client to use
+  // Only for non-API GET requests (pages) - API will handle themselves
+  if (req.method === 'GET' && !pathname.startsWith('/api/')) {
+    const token = await getCSRFToken()
+    if (!token) {
+      const newToken = generateCSRFToken()
+      response.cookies.set('csrf_token', newToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 60 * 60 * 24,
+        path: '/',
+      })
+      response.headers.set('X-CSRF-Token', newToken)
+    } else {
+      response.headers.set('X-CSRF-Token', token)
+    }
+  }
 
   // Add security headers to all responses
   return addSecurityHeaders(response)
@@ -230,8 +265,8 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all API routes for rate limiting
+     * Match all routes for CSRF and security headers
      */
-    '/api/:path*',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }

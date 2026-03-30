@@ -19,7 +19,7 @@ export const participants = pgTable('participants', {
   teamId: uuid('team_id').references(() => teams.id),
   firstName: varchar('first_name', { length: 50 }).notNull(),
   lastName: varchar('last_name', { length: 50 }).notNull(),
-  email: varchar('email', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
   phoneNumber: varchar('phone_number', { length: 20 }),
   university: varchar('university', { length: 255 }).notNull(),
   specialty: varchar('specialty', { length: 100 }).notNull(),
@@ -36,7 +36,7 @@ export const participants = pgTable('participants', {
 export const visitors = pgTable('visitors', {
   id: uuid('id').primaryKey().defaultRandom(),
   fullName: varchar('full_name', { length: 100 }).notNull(),
-  email: varchar('email', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
   phoneNumber: varchar('phone_number', { length: 20 }),
   organization: varchar('organization', { length: 255 }).notNull(),
   visitDate: varchar('visit_date', { length: 50 }).notNull(),

@@ -4,7 +4,7 @@ import { z } from 'zod'
  * Team member validation schema
  * Validates individual team member fields
  */
-const teamMemberSchema = z.object({
+export const teamMemberSchema = z.object({
   firstName: z
     .string()
     .min(2, 'First name must be at least 2 characters')
@@ -20,13 +20,20 @@ const teamMemberSchema = z.object({
   email: z
     .string()
     .email('Please enter a valid email address')
-    .max(255, 'Email must not exceed 255 characters'),
+    .max(255, 'Email must not exceed 255 characters')
+    .refine(
+      (val) => val.includes('@'),
+      'Email must contain @ symbol'
+    ),
 
   phoneNumber: z
     .string()
-    .min(8, 'Phone number must be at least 8 digits')
-    .max(20, 'Phone number must not exceed 20 characters')
-    .regex(/^[\d\s+-]+$/, 'Phone number can only contain digits, spaces, hyphens, and plus signs'),
+    .min(10, 'Phone number must be at least 10 digits')
+    .max(14, 'Phone number must not exceed 14 characters')
+    .regex(
+      /^(\+213|0)[5-7][0-9]{8}$/,
+      'Phone number must be a valid Algerian number (e.g., 05XXXXXXXX or +2135XXXXXXXX)'
+    ),
 
   university: z
     .string()
@@ -41,7 +48,8 @@ const teamMemberSchema = z.object({
   year: z
     .string()
     .min(4, 'Year must be at least 4 characters')
-    .max(10, 'Year must not exceed 10 characters'),
+    .max(10, 'Year must not exceed 10 characters')
+    .regex(/^[0-9]{4}$/, 'Year must be a 4-digit number (e.g., 2024)'),
 })
 
 /**

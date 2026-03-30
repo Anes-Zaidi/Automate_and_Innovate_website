@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Reveal from '@/components/ui/reveal'
+import { useToast } from '@/components/ui/toast'
 
 type FormData = {
   fullName: string
@@ -14,6 +16,8 @@ type FormData = {
 type FormStatus = 'idle' | 'submitting' | 'success' | 'error'
 
 export default function VisitorRegistrationForm() {
+  const router = useRouter()
+  const { addToast } = useToast()
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
@@ -24,6 +28,29 @@ export default function VisitorRegistrationForm() {
 
   const [status, setStatus] = useState<FormStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const [csrfToken, setCsrfToken] = useState<string>('')
+
+  // Fetch CSRF token on component mount
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      try {
+        const response = await fetch('/api/csrf-token', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        const data = await response.json()
+        if (data.csrfToken) {
+          setCsrfToken(data.csrfToken)
+        }
+      } catch (error) {
+        console.error('Failed to fetch CSRF token:', error)
+      }
+    }
+
+    fetchCsrfToken()
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -31,6 +58,7 @@ export default function VisitorRegistrationForm() {
       ...prev,
       [name]: value,
     }))
+    // Don't validate on typing - only on submit
   }
 
   const handleCancel = () => {
@@ -50,11 +78,54 @@ export default function VisitorRegistrationForm() {
     setStatus('submitting')
     setErrorMessage('')
 
+    // Validate all required fields
+    const errors: string[] = []
+
+    // Validate full name
+    if (!formData.fullName || formData.fullName.trim().length < 2) {
+      errors.push('Full name must be at least 2 characters')
+    }
+
+    // Validate email
+    if (!formData.email || !formData.email.includes('@') || !formData.email.includes('.')) {
+      errors.push('Please enter a valid email address')
+    }
+
+    // Validate phone number (if provided)
+    if (formData.phoneNumber) {
+      const cleaned = formData.phoneNumber.replace(/[\s\-.]/g, '')
+      const mobileRegex = /^(0[567]\d{8}|\+213[567]\d{8})$/
+      const landlineRegex = /^(0[234]\d{8}|\+213[234]\d{8})$/
+      if (!mobileRegex.test(cleaned) && !landlineRegex.test(cleaned)) {
+        errors.push('Please enter a valid Algerian phone number (e.g., 05XX XX XX XX or +213 5XX XX XX XX)')
+      }
+    }
+
+    // Validate organization
+    if (!formData.organization || formData.organization.trim().length < 2) {
+      errors.push('Organization name must be at least 2 characters')
+    }
+
+    // Validate visit date
+    if (!formData.visitDate) {
+      errors.push('Please select a visit date')
+    }
+
+    // Show all errors in toast
+    if (errors.length > 0) {
+      errors.forEach((error) => {
+        addToast(error, 'error')
+      })
+      setStatus('idle')
+      return
+    }
+
     try {
       const response = await fetch('/api/register/visitor', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
         },
         body: JSON.stringify(formData),
       })
@@ -71,16 +142,19 @@ export default function VisitorRegistrationForm() {
       }
 
       setStatus('success')
-      setFormData({
-        fullName: '',
-        email: '',
-        phoneNumber: '',
-        organization: '',
-        visitDate: '',
-      })
+      
+      // Show success toast
+      addToast('🎉 Visitor registration successful! See you at the demo day. Redirecting...', 'success')
+      
+      // Redirect to home page after 2 seconds
+      setTimeout(() => {
+        router.push('/')
+      }, 2000)
     } catch (error) {
       setStatus('error')
-      setErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred')
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred'
+      setErrorMessage(errorMsg)
+      addToast(errorMsg, 'error')
     }
   }
 
@@ -92,7 +166,7 @@ export default function VisitorRegistrationForm() {
   ]
 
   return (
-    <div className="w-full bg-black/50 min-h-screen flex items-center justify-center py-12 px-4 mt-16">
+    <div className="w-full  min-h-screen flex items-center justify-center py-12 px-4 mt-16">
       <div className="w-full max-w-2xl">
         <Reveal direction="up" delay={0.2}>
           <h1 className="text-4xl font-bold text-white mb-12">Visitor Registration</h1>
@@ -166,7 +240,7 @@ export default function VisitorRegistrationForm() {
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleChange}
-                    placeholder="123456789"
+                    placeholder="05XX XX XX XX"
                     disabled={status === 'submitting'}
                     className="w-full px-4 py-3  border-2 border-orange-500 bg-[#1A1D21]   text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   />

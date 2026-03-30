@@ -5,7 +5,10 @@
       "Bash(rm *)",
       "Bash(mv *)",
       "Bash(node *)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(npx *)",
+      "Bash(find *)",
+      "Bash(ls *)"
     ]
   },
   "$version": 3

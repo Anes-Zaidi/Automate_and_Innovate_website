@@ -20,7 +20,23 @@ export const visitorSchema = z.object({
     .string()
     .min(8, 'Phone number must be at least 8 digits')
     .max(20, 'Phone number must not exceed 20 characters')
-    .regex(/^[\d\s+-]+$/, 'Phone number can only contain digits, spaces, hyphens, and plus signs'),
+    .refine(
+      (val) => {
+        // Remove spaces, hyphens, and dots for validation
+        const cleaned = val.replace(/[\s\-.]/g, '')
+        
+        // Algerian mobile: 05/06/07 + 8 digits OR +213 5/6/7 + 8 digits
+        const mobileRegex = /^(0[567]\d{8}|\+213[567]\d{8})$/
+        
+        // Algerian landline: 02/03/04 + 8 digits OR +213 2/3/4 + 8 digits  
+        const landlineRegex = /^(0[234]\d{8}|\+213[234]\d{8})$/
+        
+        return mobileRegex.test(cleaned) || landlineRegex.test(cleaned)
+      },
+      {
+        message: 'Please enter a valid Algerian phone number (e.g., 05XX XX XX XX or +213 5XX XX XX XX)'
+      }
+    ),
 
   organization: z
     .string()

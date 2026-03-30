@@ -1,7 +1,10 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Reveal from '@/components/ui/reveal'
+import { useToast } from '@/components/ui/toast'
+import { teamMemberSchema } from '@/lib/validations/registration'
 
 type TeamMember = {
   firstName: string
@@ -33,8 +36,13 @@ const emptyMember: TeamMember = {
   year: '',
 }
 
+const STORAGE_KEY = 'hackathon_registration_data'
+
 export default function RegistrationForm() {
+  const router = useRouter()
+  const { addToast } = useToast()
   const [step, setStep] = useState<number>(1)
+  const [isLoaded, setIsLoaded] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     teamName: '',
     teamLeader: { ...emptyMember },
@@ -45,6 +53,57 @@ export default function RegistrationForm() {
 
   const [status, setStatus] = useState<FormStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [csrfToken, setCsrfToken] = useState<string>('')
+
+  // Load saved data from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem(STORAGE_KEY)
+      if (savedData) {
+        const parsed = JSON.parse(savedData)
+        setFormData(parsed.formData || formData)
+        setStep(parsed.step || 1)
+      }
+    } catch (error) {
+      console.error('Failed to load saved registration data:', error)
+    } finally {
+      setIsLoaded(true)
+    }
+  }, [])
+
+  // Fetch CSRF token on mount
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      try {
+        const response = await fetch('/api/csrf-token', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        const data = await response.json()
+        if (data.csrfToken) {
+          setCsrfToken(data.csrfToken)
+        }
+      } catch (error) {
+        console.error('Failed to fetch CSRF token:', error)
+      }
+    }
+
+    fetchCsrfToken()
+  }, [])
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    if (isLoaded && status !== 'success') {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ formData, step }))
+      } catch (error) {
+        console.error('Failed to save registration data:', error)
+      }
+    }
+  }, [formData, step, isLoaded, status])
 
   const handleMemberChange = (memberKey: keyof FormData, field: string, value: string) => {
     setFormData((prev) => ({
@@ -54,12 +113,68 @@ export default function RegistrationForm() {
         [field]: value,
       },
     }))
+    // Don't clear errors on typing - only clear on Next/Submit attempt
+  }
+
+  const validateCurrentStep = (): boolean => {
+    const currentMemberKey = getCurrentMemberKey()
+    const currentMember = formData[currentMemberKey] as TeamMember
+
+    const newErrors: Record<string, string> = {}
+
+    // Validate team name on step 1
+    if (step === 1) {
+      if (!formData.teamName || formData.teamName.trim().length < 2) {
+        newErrors['teamName'] = 'Team name must be at least 2 characters'
+      }
+    }
+
+    // Validate team member fields using Zod schema
+    try {
+      teamMemberSchema.parse(currentMember)
+    } catch (error) {
+      if (error instanceof Error && 'errors' in error && Array.isArray(error.errors)) {
+        const zodError = error as any
+        zodError.errors.forEach((err: any) => {
+          const field = err.path?.[0] || 'unknown'
+          const key = `${currentMemberKey}.${field}`
+          const message = err.message || 'Invalid value'
+          newErrors[key] = message
+          console.error(`Validation error for ${key}:`, message)
+        })
+      } else {
+        console.error('Unexpected validation error structure:', error)
+        // Fallback: add a generic error
+        newErrors[`${currentMemberKey}.general`] = 'Invalid information provided'
+      }
+    }
+
+    setFieldErrors(newErrors)
+
+    // Show toast for each error
+    const errorMessages = Object.values(newErrors)
+    console.log('Validation errors:', errorMessages)
+    
+    errorMessages.forEach((msg) => {
+      addToast(msg, 'error')
+    })
+
+    const isValid = errorMessages.length === 0
+    console.log('Validation result:', isValid ? 'PASS' : 'FAIL')
+    
+    return isValid
   }
 
   const handleMemberSubmit = (e: FormEvent) => {
     e.preventDefault()
+    
+    if (!validateCurrentStep()) {
+      return
+    }
+
     if (step < 4) {
       setStep(step + 1)
+      addToast(`Step ${step} completed! Continue with next member.`, 'success')
     } else {
       handleSubmit(e)
     }
@@ -71,23 +186,17 @@ export default function RegistrationForm() {
     }
     setStatus('idle')
     setErrorMessage('')
-  }
-
-  const handleCancel = () => {
-    setFormData({
-      teamName: '',
-      teamLeader: { ...emptyMember },
-      member2: { ...emptyMember },
-      member3: { ...emptyMember },
-      member4: { ...emptyMember },
-    })
-    setStep(1)
-    setStatus('idle')
-    setErrorMessage('')
+    setFieldErrors({})
   }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    
+    // Final validation before submission
+    if (!validateCurrentStep()) {
+      return
+    }
+
     setStatus('submitting')
     setErrorMessage('')
 
@@ -104,6 +213,7 @@ export default function RegistrationForm() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
         },
         body: JSON.stringify(payload),
       })
@@ -119,9 +229,22 @@ export default function RegistrationForm() {
       }
 
       setStatus('success')
+
+      // Clear localStorage
+      localStorage.removeItem(STORAGE_KEY)
+
+      // Show success toast
+      addToast('🎉 Registration successful! Your team is registered. Redirecting...', 'success')
+
+      // Redirect to home page after 2 seconds
+      setTimeout(() => {
+        router.push('/')
+      }, 2000)
     } catch (error) {
       setStatus('error')
-      setErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred')
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred'
+      setErrorMessage(errorMsg)
+      addToast(errorMsg, 'error')
     }
   }
 
@@ -158,34 +281,28 @@ export default function RegistrationForm() {
   const currentMemberKey = getCurrentMemberKey()
   const currentMember = formData[currentMemberKey] as TeamMember
 
+  const getFieldError = (field: string) => {
+    return fieldErrors[`${currentMemberKey}.${field}`]
+  }
+
+  const getInputClass = (field: string) => {
+    const hasError = getFieldError(field)
+    const baseClass = "w-full px-4 py-3 bg-[#1A1D21] border-2 text-white placeholder-gray-500 focus:outline-none transition disabled:opacity-50 disabled:cursor-not-allowed"
+    
+    if (hasError) {
+      return `${baseClass} border-red-500 focus:border-red-400`
+    }
+    return `${baseClass} border-orange-500 focus:border-orange-400`
+  }
+
   return (
-    <div className="w-full bg-black/50 min-h-screen flex items-center justify-center py-24  px-4">
+    <div className="w-full  min-h-screen flex items-center justify-center py-24 px-4">
       <div className="w-full max-w-2xl">
         <Reveal direction="up" delay={0.2}>
           <h1 className="text-4xl font-bold text-white mb-12">Registration Form</h1>
         </Reveal>
 
-        {/* Success Message */}
-        {status === 'success' && (
-          <Reveal direction="up" delay={0.3}>
-            <div className="mb-8 p-4 bg-green-900/50 border border-green-500 rounded">
-              <p className="text-green-400 font-medium">
-                ✓ Registration successful! Your team is registered.
-              </p>
-            </div>
-          </Reveal>
-        )}
-
-        {/* Error Message */}
-        {status === 'error' && (
-          <Reveal direction="up" delay={0.3}>
-            <div className="mb-8 p-4 bg-red-900/50 border border-red-500 rounded">
-              <p className="text-red-400 font-medium">
-                ✗ {errorMessage}
-              </p>
-            </div>
-          </Reveal>
-        )}
+   
 
         {/* Steps 1-4: Member Forms */}
         {step >= 1 && step <= 4 && (
@@ -198,13 +315,30 @@ export default function RegistrationForm() {
                   <input
                     type="text"
                     value={formData.teamName}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, teamName: e.target.value }))}
+                    onChange={(e) => {
+                      setFormData((prev) => ({ ...prev, teamName: e.target.value }))
+                      if (fieldErrors['teamName']) {
+                        setFieldErrors((prev) => {
+                          const newErrors = { ...prev }
+                          delete newErrors['teamName']
+                          return newErrors
+                        })
+                      }
+                    }}
                     placeholder="Afak"
                     disabled={status === 'submitting'}
-                    className="w-full px-4 py-3 bg-[#1A1D21]  border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={getInputClass('teamName')}
                     required
                     minLength={2}
                   />
+                  {fieldErrors['teamName'] && (
+                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {fieldErrors['teamName']}
+                    </p>
+                  )}
                 </div>
                 <h2 className="text-white text-sm font-medium mb-6 flex items-center">
                   <span className="mr-2">•</span>
@@ -234,9 +368,17 @@ export default function RegistrationForm() {
                     onChange={(e) => handleMemberChange(currentMemberKey, 'firstName', e.target.value)}
                     placeholder="Bilel"
                     disabled={status === 'submitting'}
-                    className="w-full px-4 py-3 bg-[#1A1D21]  border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={getInputClass('firstName')}
                     required
                   />
+                  {getFieldError('firstName') && (
+                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {getFieldError('firstName')}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-white text-sm font-medium mb-3">Last Name</label>
@@ -246,9 +388,17 @@ export default function RegistrationForm() {
                     onChange={(e) => handleMemberChange(currentMemberKey, 'lastName', e.target.value)}
                     placeholder="Abbes"
                     disabled={status === 'submitting'}
-                    className="w-full px-4 py-3 bg-[#1A1D21]  border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={getInputClass('lastName')}
                     required
                   />
+                  {getFieldError('lastName') && (
+                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {getFieldError('lastName')}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -262,9 +412,17 @@ export default function RegistrationForm() {
                     onChange={(e) => handleMemberChange(currentMemberKey, 'email', e.target.value)}
                     placeholder="exemple@estin.dz"
                     disabled={status === 'submitting'}
-                    className="w-full px-4 py-3 bg-[#1A1D21]  border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={getInputClass('email')}
                     required
                   />
+                  {getFieldError('email') && (
+                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {getFieldError('email')}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-white text-sm font-medium mb-3">Phone Number</label>
@@ -272,11 +430,19 @@ export default function RegistrationForm() {
                     type="tel"
                     value={currentMember.phoneNumber}
                     onChange={(e) => handleMemberChange(currentMemberKey, 'phoneNumber', e.target.value)}
-                    placeholder="123456789"
+                    placeholder="05XXXXXXXX or +2135XXXXXXXX"
                     disabled={status === 'submitting'}
-                    className="w-full px-4 py-3 bg-[#1A1D21]  border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={getInputClass('phoneNumber')}
                     required
                   />
+                  {getFieldError('phoneNumber') && (
+                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {getFieldError('phoneNumber')}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -290,9 +456,17 @@ export default function RegistrationForm() {
                     onChange={(e) => handleMemberChange(currentMemberKey, 'university', e.target.value)}
                     placeholder="Estin"
                     disabled={status === 'submitting'}
-                    className="w-full px-4 py-3 bg-[#1A1D21]  border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={getInputClass('university')}
                     required
                   />
+                  {getFieldError('university') && (
+                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {getFieldError('university')}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-white text-sm font-medium mb-3">Specialty</label>
@@ -302,9 +476,17 @@ export default function RegistrationForm() {
                     onChange={(e) => handleMemberChange(currentMemberKey, 'specialty', e.target.value)}
                     placeholder="Informatique"
                     disabled={status === 'submitting'}
-                    className="w-full px-4 py-3 bg-[#1A1D21]  border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={getInputClass('specialty')}
                     required
                   />
+                  {getFieldError('specialty') && (
+                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {getFieldError('specialty')}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -312,14 +494,24 @@ export default function RegistrationForm() {
               <div className="mb-8">
                 <label className="block text-white text-sm font-medium mb-3">Year</label>
                 <input
-                  type="text"
+                  type="number"
                   value={currentMember.year}
                   onChange={(e) => handleMemberChange(currentMemberKey, 'year', e.target.value)}
                   placeholder="2024"
                   disabled={status === 'submitting'}
-                  className="w-full px-4 py-3 bg-[#1A1D21]  border-2 border-orange-500 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={getInputClass('year')}
                   required
+                  min="1900"
+                  max="2100"
                 />
+                {getFieldError('year') && (
+                  <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {getFieldError('year')}
+                  </p>
+                )}
               </div>
 
               {/* Buttons */}
@@ -330,7 +522,7 @@ export default function RegistrationForm() {
                   disabled={status === 'submitting' || step === 1}
                   className="px-8 py-3 bg-gray-700 text-white font-medium rounded hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel
+                  Back
                 </button>
                 <button
                   type="submit"
@@ -346,9 +538,14 @@ export default function RegistrationForm() {
                       Submitting...
                     </>
                   ) : step === 4 ? (
-                    'Submit'
+                    'Submit Registration'
                   ) : (
-                    'Next'
+                    <>
+                      Next Step
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </>
                   )}
                 </button>
               </div>

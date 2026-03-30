@@ -15,6 +15,13 @@
       "when": 1774890000000,
       "tag": "0001_mighty_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774907304552,
+      "tag": "0002_uneven_master_mold",
+      "breakpoints": true
     }
   ]
 }

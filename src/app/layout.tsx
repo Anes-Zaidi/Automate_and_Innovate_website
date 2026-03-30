@@ -4,6 +4,7 @@ import "./globals.css";
 import "./animations.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import { ToastProvider } from "@/components/ui/toast";
 const roboto = Roboto({
   weight: ["100", "300", "400", "500", "700", "900"],
   variable: "--font-roboto",
@@ -26,14 +27,15 @@ export default function RootLayout({
       className={`${roboto.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-             {/* Header */}
-      <Header />
-        
-        {children}
+        <ToastProvider>
+          {/* Header */}
+          <Header />
 
-      {/* Footer */}
-      <Footer />
+          {children}
 
+          {/* Footer */}
+          <Footer />
+        </ToastProvider>
       </body>
     </html>
   );

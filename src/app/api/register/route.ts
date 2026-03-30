@@ -4,16 +4,37 @@ import { getDb } from '@/lib/db'
 import { teams, participants } from '@/lib/db/schema'
 import { registrationSchema } from '@/lib/validations/registration'
 
+// Maximum request body size (10KB)
+const MAX_BODY_SIZE = 10 * 1024
+
 /**
  * POST /api/register
  * Create a new team registration with members
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check content length
+    const contentLength = request.headers.get('content-length')
+    if (contentLength && parseInt(contentLength, 10) > MAX_BODY_SIZE) {
+      return NextResponse.json(
+        { error: 'Request body too large' },
+        { status: 413 }
+      )
+    }
+
     const db = getDb()
 
     // Parse and validate request body
-    const body = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch (parseError) {
+      return NextResponse.json(
+        { error: 'Invalid JSON format' },
+        { status: 400 }
+      )
+    }
+
     const validatedData = registrationSchema.parse(body)
 
     // Check if any team member email already exists
@@ -108,7 +129,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Handle database errors
+    // Handle database errors - don't leak details
     if (error instanceof Error) {
       console.error('Registration error:', error)
       return NextResponse.json(
