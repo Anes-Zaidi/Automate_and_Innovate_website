@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
-import { participants } from '@/lib/db/schema'
+import { teams, participants } from '@/lib/db/schema'
 import { registrationSchema } from '@/lib/validations/registration'
 
 /**
  * POST /api/register
- * Create a new participant registration
+ * Create a new team registration with members
  */
 export async function POST(request: NextRequest) {
   try {
@@ -16,46 +16,86 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = registrationSchema.parse(body)
 
-    // Check if email already exists
-    const existingParticipant = await db.query.participants.findFirst({
-      where: (p, { eq }) => eq(p.email, validatedData.email),
-    })
+    // Check if any team member email already exists
+    const allEmails = [
+      validatedData.teamLeader.email,
+      validatedData.member2.email,
+      ...(validatedData.member3 ? [validatedData.member3.email] : []),
+      ...(validatedData.member4 ? [validatedData.member4.email] : []),
+    ]
 
-    if (existingParticipant) {
-      return NextResponse.json(
-        { error: 'A participant with this email already exists' },
-        { status: 409 }
-      )
+    for (const email of allEmails) {
+      const existingParticipant = await db.query.participants.findFirst({
+        where: (p, { eq }) => eq(p.email, email),
+      })
+
+      if (existingParticipant) {
+        return NextResponse.json(
+          { error: `A participant with email ${email} already exists` },
+          { status: 409 }
+        )
+      }
     }
 
-    // Insert participant into database
-    const [newParticipant] = await db
-      .insert(participants)
+    // Create team
+    const [newTeam] = await db
+      .insert(teams)
       .values({
-        teamName: validatedData.teamName || null,
-        firstName: validatedData.firstName,
-        lastName: validatedData.lastName,
-        email: validatedData.email,
-        phoneNumber: validatedData.phoneNumber || null,
-        university: validatedData.university,
-        specialty: validatedData.specialty,
-        year: validatedData.year,
+        name: validatedData.teamName,
       })
+      .returning()
+
+    // Add team members
+    const membersToInsert: Array<{
+      firstName: string
+      lastName: string
+      email: string
+      phoneNumber: string | null
+      university: string
+      specialty: string
+      year: string
+      isTeamLeader: boolean
+    }> = [
+      { ...validatedData.teamLeader, phoneNumber: validatedData.teamLeader.phoneNumber || null, isTeamLeader: true },
+      { ...validatedData.member2, phoneNumber: validatedData.member2.phoneNumber || null, isTeamLeader: false },
+      ...(validatedData.member3 ? [{ ...validatedData.member3, phoneNumber: validatedData.member3.phoneNumber || null, isTeamLeader: false }] : []),
+      ...(validatedData.member4 ? [{ ...validatedData.member4, phoneNumber: validatedData.member4.phoneNumber || null, isTeamLeader: false }] : []),
+    ]
+
+    const insertedMembers = await db
+      .insert(participants)
+      .values(
+        membersToInsert.map((member) => ({
+          teamId: newTeam.id,
+          firstName: member.firstName,
+          lastName: member.lastName,
+          email: member.email,
+          phoneNumber: member.phoneNumber,
+          university: member.university,
+          specialty: member.specialty,
+          year: member.year,
+          isTeamLeader: member.isTeamLeader,
+        }))
+      )
       .returning()
 
     return NextResponse.json(
       {
         success: true,
-        message: 'Registration successful',
-        participant: {
-          id: newParticipant.id,
-          teamName: newParticipant.teamName,
-          firstName: newParticipant.firstName,
-          lastName: newParticipant.lastName,
-          email: newParticipant.email,
-          university: newParticipant.university,
-          registeredAt: newParticipant.registeredAt,
+        message: 'Team registration successful',
+        team: {
+          id: newTeam.id,
+          name: newTeam.name,
+          memberCount: insertedMembers.length,
+          registeredAt: newTeam.createdAt,
         },
+        members: insertedMembers.map((m) => ({
+          id: m.id,
+          firstName: m.firstName,
+          lastName: m.lastName,
+          email: m.email,
+          isTeamLeader: m.isTeamLeader,
+        })),
       },
       { status: 201 }
     )

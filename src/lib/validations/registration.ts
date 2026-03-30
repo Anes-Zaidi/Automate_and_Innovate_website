@@ -1,15 +1,10 @@
 import { z } from 'zod'
 
 /**
- * Registration form validation schema
- * Validates all fields according to business rules
+ * Team member validation schema
+ * Validates individual team member fields
  */
-export const registrationSchema = z.object({
-  teamName: z
-    .string()
-    .min(2, 'Team name must be at least 2 characters')
-    .max(100, 'Team name must not exceed 100 characters'),
-
+const teamMemberSchema = z.object({
   firstName: z
     .string()
     .min(2, 'First name must be at least 2 characters')
@@ -49,4 +44,21 @@ export const registrationSchema = z.object({
     .max(10, 'Year must not exceed 10 characters'),
 })
 
+/**
+ * Registration form validation schema
+ * Validates all fields according to business rules
+ */
+export const registrationSchema = z.object({
+  teamName: z
+    .string()
+    .min(2, 'Team name must be at least 2 characters')
+    .max(100, 'Team name must not exceed 100 characters'),
+
+  teamLeader: teamMemberSchema,
+  member2: teamMemberSchema,
+  member3: teamMemberSchema.optional(),
+  member4: teamMemberSchema.optional(),
+})
+
+export type TeamMember = z.infer<typeof teamMemberSchema>
 export type RegistrationInput = z.infer<typeof registrationSchema>

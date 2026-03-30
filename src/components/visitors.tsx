@@ -26,7 +26,7 @@ export default function Visitors() {
 
         <Reveal direction="up" delay={0.6}>
           <a
-            href="/register"
+            href="/register/visitor"
             className="inline-block px-6 sm:px-8 py-3 rounded font-semibold hover:opacity-90 transition text-sm sm:text-base"
             style={{ backgroundColor: '#FF6B35', color: '#0C0F14' }}
           >
