@@ -24,15 +24,22 @@
 
 ## Project Overview
 
-**Current State:** Frontend-only Next.js landing page with hero section, countdown timer, and navigation  
-**Next Phase:** Implement backend registration system with database integration  
+**Current State:** Full landing page with multiple sections (Hero, About, Sponsors, Schedules, Training Tracks, Speakers, Visitors)  
+**Next Phase:** Implement registration page and backend API with database integration  
 
 ### Key Features
-- Landing page with event information
-- Registration form for hackathon participants
-- Countdown timer to event start
-- Responsive design (mobile-first)
-- Admin dashboard (planned)
+- ✅ Landing page with event information
+- ✅ Countdown timer to event start
+- ✅ Responsive navigation with mobile menu
+- ✅ About section
+- ✅ Sponsors showcase
+- ✅ Event schedules
+- ✅ Training tracks information
+- ✅ Speakers and mentors section
+- ✅ Visitor information
+- ✅ Footer with links
+- 🔄 Registration form (planned)
+- 🔄 Admin dashboard (planned)
 
 ---
 
@@ -155,10 +162,11 @@
 | **Framework** | Next.js | 16.2.1 |
 | **React** | React | 19.2.4 |
 | **Styling** | Tailwind CSS | v4 |
-| **UI Components** | shadcn/ui | Latest |
+| **UI Components** | shadcn/ui | Latest (Radix Nova) |
 | **Icons** | Lucide React | Latest |
 | **TypeScript** | TypeScript | Latest |
 | **Linting** | ESLint | Latest |
+| **Animation** | tw-animate-css | Latest |
 
 ---
 
@@ -168,40 +176,53 @@
 soai-automate/
 ├── src/
 │   ├── app/
-│   │   ├── api/              # API routes (backend)
+│   │   ├── api/              # API routes (backend - planned)
 │   │   │   ├── register/
 │   │   │   └── participants/
-│   │   ├── layout.tsx        # Root layout
-│   │   ├── page.tsx          # Home page
-│   │   └── globals.css       # Global styles
+│   │   ├── favicon.ico
+│   │   ├── globals.css       # Global styles with shadcn tokens
+│   │   ├── layout.tsx        # Root layout with Roboto font
+│   │   └── page.tsx          # Home page
 │   ├── components/
 │   │   ├── ui/               # shadcn/ui components
-│   │   ├── header.tsx        # Navigation header
+│   │   │   └── button.tsx
+│   │   ├── about.tsx         # About section
+│   │   ├── countdown.tsx     # Countdown timer (client)
+│   │   ├── cta.tsx           # Call-to-action buttons
+│   │   ├── footer.tsx        # Footer section
+│   │   ├── header.tsx        # Navigation header (client)
 │   │   ├── hero.tsx          # Hero section
-│   │   ├── countdown.tsx     # Countdown timer
-│   │   └── cta.tsx           # CTA buttons
+│   │   ├── schedules.tsx     # Event schedules
+│   │   ├── speakers.tsx      # Speakers & mentors
+│   │   ├── sponsors.tsx      # Sponsors showcase
+│   │   ├── training-tracks.tsx # Training tracks
+│   │   └── visitors.tsx      # Visitor information
 │   └── lib/
-│       ├── db.ts             # Database connection
-│       ├── validation.ts     # Validation schemas
-│       ├── email.ts          # Email service
-│       ├── rate-limit.ts     # Rate limiting
-│       └── utils.ts          # Utility functions
+│       └── utils.ts          # cn() utility function
+├── public/
+│   ├── logo.svg              # SOAI logo
+│   ├── top-corner-glow.svg   # Background decoration
+│   └── gtid-decoration.svg   # Grid pattern decoration
 ├── agents/                   # Agent documentation
 │   ├── backend.md
 │   ├── design.md
 │   ├── frontend.md
 │   ├── security.md
 │   └── tester.md
-├── docs/                     # Documentation
+├── docs/                     # Documentation (planned)
 │   ├── security/
 │   └── compliance/
-├── __tests__/                # Test files
+├── __tests__/                # Test files (planned)
 │   ├── unit/
 │   ├── integration/
 │   └── e2e/
-├── public/                   # Static assets
+├── .gitignore
+├── components.json           # shadcn/ui configuration
+├── eslint.config.mjs         # ESLint configuration
+├── next.config.ts            # Next.js configuration
 ├── package.json
-├── tsconfig.json
+├── postcss.config.mjs        # PostCSS configuration
+├── tsconfig.json             # TypeScript configuration
 └── QWEN.md                   # This file
 ```
 
@@ -218,7 +239,7 @@ soai-automate/
 
 **Component Structure:**
 ```tsx
-'use client'  // Only for interactive components
+'use client'  // Only for interactive components with state/hooks
 
 import { useState, useEffect } from 'react'
 import { IconName } from 'lucide-react'
@@ -233,7 +254,7 @@ export default function ComponentName() {
 ```
 
 **File Naming:**
-- Components: lowercase with hyphens (`header.tsx`)
+- Components: lowercase with hyphens (`header.tsx`, `training-tracks.tsx`)
 - Exports: Default exports
 - Types: Inline or same file
 
@@ -247,7 +268,7 @@ export default function ComponentName() {
 
 ```tsx
 // ✅ CORRECT
-<div style={{ backgroundColor: '#0C0F14' }} className="flex gap-4">
+<div style={{ backgroundColor: '#0C0F14', borderColor: 'rgba(249, 98, 29, 0.15)' }} className="flex gap-4">
 ```
 
 ### Responsive Design
@@ -263,7 +284,7 @@ export default function ComponentName() {
 - ARIA labels for all interactive elements
 - Keyboard navigation support
 - Semantic HTML elements
-- Alt text for all images
+- Alt text for all images (`alt=""` for decorative)
 - Focus indicators
 
 ---
@@ -330,9 +351,14 @@ const ratelimit = new Ratelimit({
 __tests__/
 ├── unit/
 │   ├── components/
+│   │   ├── header.test.tsx
+│   │   ├── countdown.test.tsx
+│   │   └── hero.test.tsx
 │   └── utils/
+│       └── utils.test.ts
 ├── integration/
 │   └── components/
+│       └── hero-integration.test.tsx
 ├── e2e/
 │   ├── registration.spec.ts
 │   ├── navigation.spec.ts
@@ -382,6 +408,9 @@ pnpm add <pkg>    # Add dependency
 pnpm remove <pkg> # Remove dependency
 pnpm update       # Update dependencies
 pnpm audit        # Security audit
+
+# shadcn/ui
+pnpm dlx shadcn@latest add <component>  # Add new component
 ```
 
 ---
@@ -394,9 +423,11 @@ pnpm audit        # Security audit
 | Primary Background | `#0C0F14` | Main background |
 | Secondary Background | `#0A0A0A` | Header background |
 | Primary Accent | `#F9621D` | Buttons, borders, highlights |
-| Accent Gold | `#F9C673` | Hover states |
+| Accent Gold | `#F9C673` | Hover states, accent text |
 | Text White | `#FFFFFF` | Primary text |
 | Text Gray | `rgba(255,255,255,0.7)` | Secondary text |
+| Text Gray Dim | `rgba(255,255,255,0.6)` | Tertiary text |
+| Border Accent | `rgba(249, 98, 29, 0.15)` | Subtle borders |
 
 ### Responsive Breakpoints
 | Breakpoint | Width |
@@ -411,7 +442,23 @@ pnpm audit        # Security audit
 - [`tsconfig.json`](tsconfig.json) - TypeScript configuration
 - [`components.json`](components.json) - shadcn/ui configuration
 - [`src/lib/utils.ts`](src/lib/utils.ts) - Utility functions
-- [`src/app/globals.css`](src/app/globals.css) - Global styles
+- [`src/app/globals.css`](src/app/globals.css) - Global styles with design tokens
+- [`src/app/layout.tsx`](src/app/layout.tsx) - Root layout with Roboto font
+
+### Current Components
+| Component | Type | Description |
+|-----------|------|-------------|
+| `header.tsx` | Client | Navigation with mobile menu |
+| `hero.tsx` | Server | Hero section with title and event details |
+| `countdown.tsx` | Client | Countdown timer to event |
+| `cta.tsx` | Server | Call-to-action buttons |
+| `about.tsx` | Server | About section |
+| `sponsors.tsx` | Server | Sponsors showcase |
+| `schedules.tsx` | Server | Event schedules |
+| `training-tracks.tsx` | Server | Training tracks information |
+| `speakers.tsx` | Server | Speakers and mentors |
+| `visitors.tsx` | Server | Visitor information |
+| `footer.tsx` | Server | Footer with links |
 
 ---
 
@@ -425,5 +472,5 @@ pnpm audit        # Security audit
 
 ---
 
-**Last Updated:** March 29, 2026  
-**Version:** 1.0.0
+**Last Updated:** March 30, 2026  
+**Version:** 1.1.0

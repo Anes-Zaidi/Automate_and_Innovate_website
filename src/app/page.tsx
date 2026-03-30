@@ -5,6 +5,10 @@ import CTA from '@/components/cta'
 import About from '@/components/about'
 import Sponsors from '@/components/sponsors'
 import Schedules from '@/components/schedules'
+import Speakers from '@/components/speakers'
+import TrainingTracks from '@/components/training-tracks'
+import Visitors from '@/components/visitors'
+import Footer from '@/components/footer'
 import Image from 'next/image'
 
 export default function Home() {
@@ -52,8 +56,8 @@ export default function Home() {
       <Header />
 
       {/* Hero Section with Max Width Container */}
-      <div className="relative  z-10 flex-1 flex items-center justify-center w-full pt-28 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6">
-        <div className="w-full h-full flex flex-col items-center justify-center gap-12">
+      <div className="relative h-[70vh] z-10 flex-1 flex items-center justify-center w-full pt-28 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 border-b " style={{ borderColor: '#FF6B35' }}>
+        <div className="w-full h-[70vh] flex flex-col items-center justify-center gap-12">
           <Hero />
           <Countdown />
           <CTA />
@@ -68,6 +72,20 @@ export default function Home() {
 
       {/* Schedules Section */}
       <Schedules />
+
+     {/* Training Tracks Section */}
+      <TrainingTracks />
+      
+      {/* Speakers & Mentors Section */}
+      <Speakers />
+
+ 
+
+      {/* Visitors Section */}
+      <Visitors />
+
+      {/* Footer */}
+      <Footer />
     </main>
   )
 }

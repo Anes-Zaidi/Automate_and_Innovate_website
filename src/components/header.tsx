@@ -41,8 +41,8 @@ export default function Header() {
 
           {/* Register Button */}
           <button
-            className="hidden sm:inline px-4 sm:px-6 py-2 text-white text-sm sm:text-base font-semibold rounded transition-opacity hover:opacity-90"
-            style={{ backgroundColor: '#F9621D' }}
+            className="hidden sm:inline px-4 sm:px-6 py-2 text-sm sm:text-base font-semibold rounded transition-opacity hover:opacity-90"
+            style={{ backgroundColor: '#F9621D', color: '#0C0F14' }}
           >
             Register
           </button>
@@ -61,8 +61,8 @@ export default function Header() {
               Contact
             </Link>
             <button
-              className="w-full mt-2 px-4 py-2 text-white text-sm font-semibold rounded transition-opacity hover:opacity-90"
-              style={{ backgroundColor: '#F9621D' }}
+              className="w-full mt-2 px-4 py-2 text-sm font-semibold rounded transition-opacity hover:opacity-90"
+              style={{ backgroundColor: '#F9621D', color: '#0C0F14' }}
             >
               Register
             </button>

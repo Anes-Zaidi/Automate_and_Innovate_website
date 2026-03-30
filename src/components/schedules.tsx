@@ -220,7 +220,7 @@ export default function Schedules() {
         .text-from-right { animation: fadeSlideRight 0.5s ease-out both; }
       `}</style>
 
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <h2
           className="text-4xl font-bold text-center mb-20 tracking-tight"
           style={{ color: '#F4C430' }}
@@ -228,7 +228,7 @@ export default function Schedules() {
           Schedules &amp; Training
         </h2>
 
-        <div ref={containerRef} className="relative" style={{ paddingTop: '120px' }}>
+        <div ref={containerRef} className="relative" style={{ paddingTop: '80px' }}>
 
           {/* ── SVG overlay ──────────────────────────────────────────────── */}
           {svgW > 0 && pathD && (
@@ -317,7 +317,7 @@ export default function Schedules() {
           )}
 
           {/* ── Event rows ─────────────────────────────────────────────────── */}
-          <div className="relative flex flex-col gap-36" style={{ zIndex: 1 }}>
+          <div className="relative flex flex-col gap-64 mb-12" style={{ zIndex: 1 }}>
             {EVENTS.map((event, i) => {
               const isRight = event.side === 'right'
               return (
