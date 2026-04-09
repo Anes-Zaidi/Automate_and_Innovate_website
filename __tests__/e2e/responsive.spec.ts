@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 
 const viewports = {
   mobile: { width: 375, height: 667 },
@@ -45,9 +45,9 @@ test.describe('Responsive Design - Homepage', () => {
   test('countdown timer displays correctly on all screen sizes', async ({ page }) => {
     await page.goto('/')
 
-    for (const [name, size] of Object.entries(viewports)) {
+    for (const [_, size] of Object.entries(viewports)) {
       await page.setViewportSize(size)
-      
+
       const timerBoxes = page.locator('[role="timer"]')
       await expect(timerBoxes.first()).toBeVisible()
     }
@@ -110,7 +110,7 @@ test.describe('Responsive Design - Registration Page', () => {
   test('buttons are accessible on all screen sizes', async ({ page }) => {
     await page.goto('/register')
 
-    for (const [name, size] of Object.entries(viewports)) {
+    for (const [_, size] of Object.entries(viewports)) {
       await page.setViewportSize(size)
 
       const buttons = page.locator('button')

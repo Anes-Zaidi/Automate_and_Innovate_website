@@ -236,7 +236,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Continue to the next middleware/route
-  let response = NextResponse.next()
+  const response = NextResponse.next()
 
   // Add CSRF token to responses for client to use
   // Only for non-API GET requests (pages) - API will handle themselves

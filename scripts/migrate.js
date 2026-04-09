@@ -4,6 +4,7 @@
  * Runs database migrations during build on Vercel
  */
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { neon } = require('@neondatabase/serverless')
 
 async function runMigrations() {

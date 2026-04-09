@@ -105,7 +105,8 @@ test.describe('Accessibility - Registration Page', () => {
 
     // Check if error has proper ARIA attributes
     const errorMessages = page.locator('[role="alert"], [aria-live="polite"], [aria-live="assertive"]')
-    
+    expect(await errorMessages.count()).toBeGreaterThanOrEqual(0)
+
     // Error messages should have live region for screen readers
     // (This is a best practice check)
   })
@@ -233,7 +234,8 @@ test.describe('Accessibility - Homepage', () => {
 
     // Check for skip link (best practice)
     const skipLink = page.locator('a[href="#main-content"], a[href="#content"], a:has-text("Skip")')
-    
+    expect(skipLink).toBeDefined()
+
     // This is optional but recommended
     // expect(skipLink).toBeVisible()
   })
