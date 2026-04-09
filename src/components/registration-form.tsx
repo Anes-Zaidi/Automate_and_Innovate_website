@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState, FormEvent, useEffect } from 'react'
@@ -38,6 +39,41 @@ const emptyMember: TeamMember = {
 
 const STORAGE_KEY = 'hackathon_registration_data'
 
+const STEPS = [
+  { label: 'Leader', key: 'teamLeader' },
+  { label: 'Member 2', key: 'member2' },
+  { label: 'Member 3', key: 'member3' },
+  { label: 'Member 4', key: 'member4' },
+] as const
+
+// Reusable field component
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string
+  error?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <label className="block text-gray-400 text-xs font-medium uppercase tracking-wider mb-2">
+        {label}
+      </label>
+      {children}
+      {error && (
+        <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function RegistrationForm() {
   const router = useRouter()
   const { addToast } = useToast()
@@ -50,13 +86,11 @@ export default function RegistrationForm() {
     member3: { ...emptyMember },
     member4: { ...emptyMember },
   })
-
   const [status, setStatus] = useState<FormStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [csrfToken, setCsrfToken] = useState<string>('')
 
-  // Load saved data from localStorage on mount
   useEffect(() => {
     try {
       const savedData = localStorage.getItem(STORAGE_KEY)
@@ -72,29 +106,19 @@ export default function RegistrationForm() {
     }
   }, [])
 
-  // Fetch CSRF token on mount
   useEffect(() => {
     const fetchCsrfToken = async () => {
       try {
-        const response = await fetch('/api/csrf-token', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
+        const response = await fetch('/api/csrf-token')
         const data = await response.json()
-        if (data.csrfToken) {
-          setCsrfToken(data.csrfToken)
-        }
+        if (data.csrfToken) setCsrfToken(data.csrfToken)
       } catch (error) {
         console.error('Failed to fetch CSRF token:', error)
       }
     }
-
     fetchCsrfToken()
   }, [])
 
-  // Save data to localStorage whenever it changes
   useEffect(() => {
     if (isLoaded && status !== 'success') {
       try {
@@ -105,76 +129,62 @@ export default function RegistrationForm() {
     }
   }, [formData, step, isLoaded, status])
 
-  const handleMemberChange = (memberKey: keyof FormData, field: string, value: string) => {
+  const currentMemberKey = STEPS[step - 1].key as keyof FormData
+  const currentMember = formData[currentMemberKey] as TeamMember
+
+  const handleMemberChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
-      [memberKey]: {
-        ...(prev[memberKey] as TeamMember),
+      [currentMemberKey]: {
+        ...(prev[currentMemberKey] as TeamMember),
         [field]: value,
       },
     }))
-    // Don't clear errors on typing - only clear on Next/Submit attempt
+  }
+
+  const getFieldError = (field: string) => fieldErrors[`${currentMemberKey}.${field}`]
+
+  const inputClass = (field: string) => {
+    const hasError = getFieldError(field)
+    return `w-full px-4 py-3 bg-[#111316] border rounded-lg text-white placeholder-gray-600 focus:outline-none transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed text-sm ${
+      hasError
+        ? 'border-red-500/60 focus:border-red-400'
+        : 'border-white/10 focus:border-orange-500/60'
+    }`
   }
 
   const validateCurrentStep = (): boolean => {
-    const currentMemberKey = getCurrentMemberKey()
-    const currentMember = formData[currentMemberKey] as TeamMember
-
     const newErrors: Record<string, string> = {}
 
-    // Validate team name on step 1
-    if (step === 1) {
-      if (!formData.teamName || formData.teamName.trim().length < 2) {
-        newErrors['teamName'] = 'Team name must be at least 2 characters'
-      }
+    if (step === 1 && (!formData.teamName || formData.teamName.trim().length < 2)) {
+      newErrors['teamName'] = 'Team name must be at least 2 characters'
     }
 
-    // Validate team member fields using Zod schema
     try {
       teamMemberSchema.parse(currentMember)
-    } catch (error) {
-      if (error instanceof Error && 'errors' in error && Array.isArray(error.errors)) {
-        const zodError = error as any
-        zodError.errors.forEach((err: any) => {
+    } catch (error: any) {
+      if (Array.isArray(error?.errors)) {
+        error.errors.forEach((err: any) => {
           const field = err.path?.[0] || 'unknown'
-          const key = `${currentMemberKey}.${field}`
-          const message = err.message || 'Invalid value'
-          newErrors[key] = message
-          console.error(`Validation error for ${key}:`, message)
+          newErrors[`${currentMemberKey}.${field}`] = err.message || 'Invalid value'
         })
       } else {
-        console.error('Unexpected validation error structure:', error)
-        // Fallback: add a generic error
         newErrors[`${currentMemberKey}.general`] = 'Invalid information provided'
       }
     }
 
     setFieldErrors(newErrors)
-
-    // Show toast for each error
-    const errorMessages = Object.values(newErrors)
-    console.log('Validation errors:', errorMessages)
-    
-    errorMessages.forEach((msg) => {
-      addToast(msg, 'error')
-    })
-
-    const isValid = errorMessages.length === 0
-    console.log('Validation result:', isValid ? 'PASS' : 'FAIL')
-    
-    return isValid
+    Object.values(newErrors).forEach((msg) => addToast(msg, 'error'))
+    return Object.keys(newErrors).length === 0
   }
 
   const handleMemberSubmit = (e: FormEvent) => {
     e.preventDefault()
-    
-    if (!validateCurrentStep()) {
-      return
-    }
-
+    if (!validateCurrentStep()) return
     if (step < 4) {
       setStep(step + 1)
-      addToast(`Step ${step} completed! Continue with next member.`, 'success')
+      setFieldErrors({})
+      addToast(`Step ${step} completed!`, 'success')
     } else {
       handleSubmit(e)
     }
@@ -183,366 +193,258 @@ export default function RegistrationForm() {
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1)
+      setStatus('idle')
+      setErrorMessage('')
+      setFieldErrors({})
     }
-    setStatus('idle')
-    setErrorMessage('')
-    setFieldErrors({})
   }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    
-    // Final validation before submission
-    if (!validateCurrentStep()) {
-      return
-    }
+    if (!validateCurrentStep()) return
 
     setStatus('submitting')
     setErrorMessage('')
 
     try {
-      const payload = {
-        teamName: formData.teamName,
-        teamLeader: formData.teamLeader,
-        member2: formData.member2,
-        member3: formData.member3,
-        member4: formData.member4,
-      }
-
       const response = await fetch('/api/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify(formData),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        if (data.details && Array.isArray(data.details)) {
-          const errors = data.details.map((d: any) => d.message).join(', ')
-          throw new Error(errors)
-        }
-        throw new Error(data.error || 'Registration failed')
+        const errors = data.details?.map((d: any) => d.message).join(', ')
+        throw new Error(errors || data.error || 'Registration failed')
       }
 
       setStatus('success')
-
-      // Clear localStorage
       localStorage.removeItem(STORAGE_KEY)
-
-      // Show success toast
-      addToast('🎉 Registration successful! Your team is registered. Redirecting...', 'success')
-
-      // Redirect to home page after 2 seconds
-      setTimeout(() => {
-        router.push('/')
-      }, 2000)
+      addToast('🎉 Registration successful! Redirecting...', 'success')
+      setTimeout(() => router.push('/'), 2000)
     } catch (error) {
       setStatus('error')
-      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred'
-      setErrorMessage(errorMsg)
-      addToast(errorMsg, 'error')
+      const msg = error instanceof Error ? error.message : 'An unexpected error occurred'
+      setErrorMessage(msg)
+      addToast(msg, 'error')
     }
-  }
-
-  const getMemberTitle = () => {
-    switch (step) {
-      case 1:
-        return 'Team leader information'
-      case 2:
-        return 'Member 2 information'
-      case 3:
-        return 'Member 3 information'
-      case 4:
-        return 'Member 4 information'
-      default:
-        return ''
-    }
-  }
-
-  const getCurrentMemberKey = (): keyof FormData => {
-    switch (step) {
-      case 1:
-        return 'teamLeader'
-      case 2:
-        return 'member2'
-      case 3:
-        return 'member3'
-      case 4:
-        return 'member4'
-      default:
-        return 'teamLeader'
-    }
-  }
-
-  const currentMemberKey = getCurrentMemberKey()
-  const currentMember = formData[currentMemberKey] as TeamMember
-
-  const getFieldError = (field: string) => {
-    return fieldErrors[`${currentMemberKey}.${field}`]
-  }
-
-  const getInputClass = (field: string) => {
-    const hasError = getFieldError(field)
-    const baseClass = "w-full px-4 py-3 bg-[#1A1D21] border-2 text-white placeholder-gray-500 focus:outline-none transition disabled:opacity-50 disabled:cursor-not-allowed"
-    
-    if (hasError) {
-      return `${baseClass} border-red-500 focus:border-red-400`
-    }
-    return `${baseClass} border-orange-500 focus:border-orange-400`
   }
 
   return (
-    <div className="w-full  min-h-screen flex items-center justify-center py-24 px-4">
+    <div className="w-full min-h-screen flex items-center justify-center py-24 px-4">
       <div className="w-full max-w-2xl">
-        <Reveal direction="up" delay={0.2}>
-          <h1 className="text-4xl font-bold text-white mb-12">Registration Form</h1>
+
+        <Reveal direction="up" delay={0.1}>
+          <div className="mb-10">
+            <p className="text-orange-500 text-sm font-medium mb-2 uppercase tracking-widest">
+              Hackathon
+            </p>
+            <h1 className="text-4xl font-bold text-white">Registration Form</h1>
+          </div>
         </Reveal>
 
-   
+        {/* Step Progress */}
+        <Reveal direction="up" delay={0.2}>
+          <div className="flex items-center gap-0 mb-10">
+            {STEPS.map((s, i) => {
+              const stepNum = i + 1
+              const isDone = step > stepNum
+              const isActive = step === stepNum
+              return (
+                <div key={s.key} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
+                      style={{
+                        backgroundColor: isDone ? '#F9621D' : isActive ? 'rgba(249,98,29,0.15)' : 'rgba(255,255,255,0.05)',
+                        border: isActive ? '2px solid #F9621D' : isDone ? '2px solid #F9621D' : '2px solid rgba(255,255,255,0.1)',
+                        color: isDone || isActive ? '#F9621D' : '#6b7280',
+                      }}
+                    >
+                      {isDone ? (
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <span style={{ color: isActive ? '#F9621D' : '#6b7280' }}>{stepNum}</span>
+                      )}
+                    </div>
+                    <span
+                      className="text-xs font-medium whitespace-nowrap"
+                      style={{ color: isActive ? '#fff' : isDone ? '#9ca3af' : '#4b5563' }}
+                    >
+                      {s.label}
+                    </span>
+                  </div>
+                  {i < STEPS.length - 1 && (
+                    <div
+                      className="flex-1 h-px mx-2 mb-5 transition-all duration-300"
+                      style={{ backgroundColor: step > stepNum ? '#F9621D' : 'rgba(255,255,255,0.08)' }}
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </Reveal>
 
-        {/* Steps 1-4: Member Forms */}
-        {step >= 1 && step <= 4 && (
-          <Reveal direction="up" delay={0.4}>
-            {/* Team Name input - only on step 1 */}
+        <Reveal direction="up" delay={0.3}>
+          <div
+            className="rounded-xl p-8"
+            style={{ backgroundColor: '#0E1013', border: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            {/* Team Name — step 1 only */}
             {step === 1 && (
-              <div className="mb-8">
-                <div className="mb-8">
-                  <label className="block text-white text-sm font-medium mb-3">Team Name</label>
+              <div className="mb-8 pb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <Field label="Team Name" error={fieldErrors['teamName']}>
                   <input
                     type="text"
                     value={formData.teamName}
-                    onChange={(e) => {
-                      setFormData((prev) => ({ ...prev, teamName: e.target.value }))
-                      if (fieldErrors['teamName']) {
-                        setFieldErrors((prev) => {
-                          const newErrors = { ...prev }
-                          delete newErrors['teamName']
-                          return newErrors
-                        })
-                      }
-                    }}
-                    placeholder="Afak"
+                    onChange={(e) => setFormData((prev) => ({ ...prev, teamName: e.target.value }))}
+                    placeholder="e.g. Afak"
                     disabled={status === 'submitting'}
-                    className={getInputClass('teamName')}
-                    required
-                    minLength={2}
+                    className={inputClass('teamName')}
                   />
-                  {fieldErrors['teamName'] && (
-                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {fieldErrors['teamName']}
-                    </p>
-                  )}
-                </div>
-                <h2 className="text-white text-sm font-medium mb-6 flex items-center">
-                  <span className="mr-2">•</span>
-                  Team leader information
-                </h2>
+                </Field>
               </div>
             )}
 
-            {/* Member section headers for steps 2-4 */}
-            {step >= 2 && (
-              <div className="mb-8">
-                <h2 className="text-white text-sm font-medium mb-6 flex items-center">
-                  <span className="mr-2">•</span>
-                  {getMemberTitle()}
-                </h2>
-              </div>
-            )}
+            {/* Section title */}
+            <div className="flex items-center gap-3 mb-8">
+              <div
+                className="w-1 h-5 rounded-full"
+                style={{ backgroundColor: '#F9621D' }}
+              />
+              <h2 className="text-white font-semibold text-base">
+                {STEPS[step - 1].label === 'Leader' ? 'Team Leader' : STEPS[step - 1].label} Information
+              </h2>
+            </div>
 
-            <form onSubmit={handleMemberSubmit}>
-              {/* First Name and Last Name */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-white text-sm font-medium mb-3">First Name</label>
+            <form onSubmit={handleMemberSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <Field label="First Name" error={getFieldError('firstName')}>
                   <input
                     type="text"
                     value={currentMember.firstName}
-                    onChange={(e) => handleMemberChange(currentMemberKey, 'firstName', e.target.value)}
-                    placeholder="Bilel"
+                    onChange={(e) => handleMemberChange('firstName', e.target.value)}
+                    placeholder="Zakaria"
                     disabled={status === 'submitting'}
-                    className={getInputClass('firstName')}
-                    required
+                    className={inputClass('firstName')}
                   />
-                  {getFieldError('firstName') && (
-                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {getFieldError('firstName')}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-white text-sm font-medium mb-3">Last Name</label>
+                </Field>
+                <Field label="Last Name" error={getFieldError('lastName')}>
                   <input
                     type="text"
                     value={currentMember.lastName}
-                    onChange={(e) => handleMemberChange(currentMemberKey, 'lastName', e.target.value)}
-                    placeholder="Abbes"
+                    onChange={(e) => handleMemberChange('lastName', e.target.value)}
+                    placeholder="Tikialine"
                     disabled={status === 'submitting'}
-                    className={getInputClass('lastName')}
-                    required
+                    className={inputClass('lastName')}
                   />
-                  {getFieldError('lastName') && (
-                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {getFieldError('lastName')}
-                    </p>
-                  )}
-                </div>
+                </Field>
               </div>
 
-              {/* Email and Phone Number */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-white text-sm font-medium mb-3">Email</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <Field label="Email" error={getFieldError('email')}>
                   <input
                     type="email"
                     value={currentMember.email}
-                    onChange={(e) => handleMemberChange(currentMemberKey, 'email', e.target.value)}
+                    onChange={(e) => handleMemberChange('email', e.target.value)}
                     placeholder="exemple@estin.dz"
                     disabled={status === 'submitting'}
-                    className={getInputClass('email')}
-                    required
+                    className={inputClass('email')}
                   />
-                  {getFieldError('email') && (
-                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {getFieldError('email')}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-white text-sm font-medium mb-3">Phone Number</label>
+                </Field>
+                <Field label="Phone Number" error={getFieldError('phoneNumber')}>
                   <input
                     type="tel"
                     value={currentMember.phoneNumber}
-                    onChange={(e) => handleMemberChange(currentMemberKey, 'phoneNumber', e.target.value)}
-                    placeholder="05XXXXXXXX or +2135XXXXXXXX"
+                    onChange={(e) => handleMemberChange('phoneNumber', e.target.value)}
+                    placeholder="05XXXXXXXX"
                     disabled={status === 'submitting'}
-                    className={getInputClass('phoneNumber')}
-                    required
+                    className={inputClass('phoneNumber')}
                   />
-                  {getFieldError('phoneNumber') && (
-                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {getFieldError('phoneNumber')}
-                    </p>
-                  )}
-                </div>
+                </Field>
               </div>
 
-              {/* University and Specialty */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-white text-sm font-medium mb-3">University</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <Field label="University" error={getFieldError('university')}>
                   <input
                     type="text"
                     value={currentMember.university}
-                    onChange={(e) => handleMemberChange(currentMemberKey, 'university', e.target.value)}
-                    placeholder="Estin"
+                    onChange={(e) => handleMemberChange('university', e.target.value)}
+                    placeholder="ESTIN"
                     disabled={status === 'submitting'}
-                    className={getInputClass('university')}
-                    required
+                    className={inputClass('university')}
                   />
-                  {getFieldError('university') && (
-                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {getFieldError('university')}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-white text-sm font-medium mb-3">Specialty</label>
+                </Field>
+                <Field label="Specialty" error={getFieldError('specialty')}>
                   <input
                     type="text"
                     value={currentMember.specialty}
-                    onChange={(e) => handleMemberChange(currentMemberKey, 'specialty', e.target.value)}
+                    onChange={(e) => handleMemberChange('specialty', e.target.value)}
                     placeholder="Informatique"
                     disabled={status === 'submitting'}
-                    className={getInputClass('specialty')}
-                    required
+                    className={inputClass('specialty')}
                   />
-                  {getFieldError('specialty') && (
-                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {getFieldError('specialty')}
-                    </p>
-                  )}
-                </div>
+                </Field>
               </div>
 
-              {/* Year */}
-              <div className="mb-8">
-                <label className="block text-white text-sm font-medium mb-3">Year</label>
+              <Field label="Academic Year" error={getFieldError('year')}>
                 <input
                   type="number"
                   value={currentMember.year}
-                  onChange={(e) => handleMemberChange(currentMemberKey, 'year', e.target.value)}
-                  placeholder="2024"
+                  onChange={(e) => handleMemberChange('year', e.target.value)}
+                  placeholder="2022"
                   disabled={status === 'submitting'}
-                  className={getInputClass('year')}
-                  required
-                  min="1900"
-                  max="2100"
+                  className={inputClass('year')}
+                  min="2020"
+                  max="2026"
                 />
-                {getFieldError('year') && (
-                  <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    {getFieldError('year')}
-                  </p>
-                )}
-              </div>
+              </Field>
 
-              {/* Buttons */}
-              <div className="flex gap-4 justify-end">
+              {/* Actions */}
+              <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
                   onClick={handleBack}
                   disabled={status === 'submitting' || step === 1}
-                  className="px-8 py-3 bg-gray-700 text-white font-medium rounded hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ border: '1px solid rgba(255,255,255,0.08)' }}
                 >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
                   Back
                 </button>
+
                 <button
                   type="submit"
                   disabled={status === 'submitting'}
-                  className="px-8 py-3 bg-orange-500 text-white font-medium rounded hover:bg-orange-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: '#F9621D', color: '#0A0A0A' }}
                 >
                   {status === 'submitting' ? (
                     <>
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
                       Submitting...
                     </>
                   ) : step === 4 ? (
-                    'Submit Registration'
+                    <>
+                      Submit Registration
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </>
                   ) : (
                     <>
                       Next Step
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </>
@@ -550,8 +452,8 @@ export default function RegistrationForm() {
                 </button>
               </div>
             </form>
-          </Reveal>
-        )}
+          </div>
+        </Reveal>
       </div>
     </div>
   )

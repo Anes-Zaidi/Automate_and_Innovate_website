@@ -6,19 +6,19 @@ import Reveal from '@/components/ui/reveal'
 export default function TrainingTracks() {
   const tracks = [
     {
-      title: 'Backend',
+      title: 'Backend  (Automation & Logic)',
       icon: Server,
-      description: 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis. Lorem ipsum dolor sit amet, consectetur adipisicing elit interdum.'
+      description: 'Master the engine behind modern AI applications using n8n. In this track, students move beyond traditional coding bottlenecks to build complex, scalable workflows. You will learn to architect industrial-grade logic, manage secure API integrations, and connect advanced AI models to real-world data—all while maintaining the speed required for rapid deployment.'
     },
     {
-      title: 'Frontend',
+      title: 'Frontend (AI-Assisted Development)',
       icon: Layout,
-      description: 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis. Lorem ipsum dolor sit amet, consectetur adipisicing elit interdum.'
+      description: 'Bridge the gap between raw code and a professional user experience. This track focuses on AI-native development, teaching students how to use state-of-the-art tools to "prompt" high-end interfaces into existence. You will learn to refine UX/UI designs at record speed, ensuring that your technical solution looks, feels, and functions like a market-ready product.'
     },
     {
-      title: 'Business',
+      title: 'Business (Strategy & Pitching)',
       icon: Briefcase,
-      description: 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis. Lorem ipsum dolor sit amet, consectetur adipisicing elit interdum.'
+      description: 'Transform a technical project into a viable business case. This track prepares students for the Public Pitch, focusing on market fit, value proposition, and communication. You will learn how to present your MVP to incubators like DjazairIA, proving that your solution isn\'t just a working script, but a scalable startup with a clear path to impact.'
     }
   ]
 

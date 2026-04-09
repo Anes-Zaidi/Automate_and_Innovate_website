@@ -13,51 +13,45 @@ export default function Sponsors() {
           </h2>
         </Reveal>
 
-        {/* Sponsor Tiers Grid */}
-        <div className="grid grid-cols-1 mt-8 md:grid-cols-3 gap-8 md:gap-12 mb-16 md:mb-20 items-start justify-items-center">
-          {/* Silver Sponsor */}
+        {/* Sponsors Grid */}
+        <div className="flex flex-col sm:flex-row gap-8 md:gap-12 mb-16 md:mb-20 items-center justify-center">
+          {/* n8n */}
           <Reveal direction="up" delay={0.3}>
             <div className="flex flex-col items-center gap-4">
-              <p className="text-lg sm:text-xl font-semibold text-gray-300">Silver</p>
-              <div className="w-64 sm:w-72 md:w-80 h-80 sm:h-96 rounded-lg overflow-hidden">
+              <div
+                className="w-72 sm:w-80 md:w-96 h-72 sm:h-80 md:h-96 rounded-lg overflow-hidden flex items-center justify-center bg-white"
+                style={{
+                  border: '3px solid #FF6600',
+                  boxShadow: '0 0 20px 2px rgba(255, 102, 0, 0.3)',
+                }}
+              >
                 <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Rectangle%2042-Sk5WnGo9VAxiXDr4UpckY0jBNlhpG2.png"
-                  alt="Silver sponsor"
-                  className="w-full h-full object-cover"
+                  src="https://n8n.io/n8n-logo.png"
+                  alt="n8n"
+                  className="w-2/3 object-contain"
                 />
               </div>
+              <p className="text-base sm:text-lg font-semibold text-gray-300">n8n</p>
             </div>
           </Reveal>
 
-          {/* Golden Sponsor (Featured) */}
+          {/* Estinup */}
           <Reveal direction="up" delay={0.4}>
-            <div className="flex flex-col relative md:-top-16 items-center gap-4">
-              <p className="text-lg sm:text-xl font-semibold" style={{ color: '#F4C430' }}>
-                Golden
-              </p>
-              <div className="w-72 sm:w-80 md:w-96 h-96 sm:h-112 md:h-128 rounded-lg overflow-hidden">
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Rectangle%2041-M8LJiTlPlGbPT7jzWTny5aEbav5lUJ.png"
-                  alt="Golden sponsor"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-          </Reveal>
-
-          {/* Bronze Sponsor */}
-          <Reveal direction="up" delay={0.5}>
             <div className="flex flex-col items-center gap-4">
-              <p className="text-lg sm:text-xl font-semibold" style={{ color: '#CD7F32' }}>
-                Bronze
-              </p>
-              <div className="w-64 sm:w-72 md:w-80 h-80 sm:h-96 rounded-lg overflow-hidden">
+              <div
+                className="w-72 sm:w-80 md:w-96 h-72 sm:h-80 md:h-96 rounded-lg overflow-hidden flex items-center justify-center bg-black"
+                style={{
+                  border: '3px solid #F4C430',
+                  boxShadow: '0 0 20px 2px rgba(244, 196, 48, 0.3)',
+                }}
+              >
                 <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Rectangle%2043-PsfhG5GCVLyucfpEeTRF5wPznFxYMv.png"
-                  alt="Bronze sponsor"
-                  className="w-full h-full object-cover"
+                  src="/image.png"
+                  alt="Estinup"
+                  className="w-2/3 object-contain"
                 />
               </div>
+              <p className="text-base sm:text-lg font-semibold text-gray-300">Estinup — ESTIN Bejaia</p>
             </div>
           </Reveal>
         </div>
@@ -65,16 +59,14 @@ export default function Sponsors() {
         {/* Partnership CTA */}
         <Reveal direction="up" delay={0.6}>
           <div className="text-center max-w-2xl mx-auto px-4">
-            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-white">You want to be a partnarie?</h3>
+            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-white">Interested in Partnering?</h3>
             <p className="text-gray-400 text-sm sm:text-base mb-6 sm:mb-8 leading-relaxed">
-              Dorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus. Sed dignissim, metus nec fringilla accumsan, risus sem sollicitudin lacus, ut interdum tellus elit sed risus.
+              Join us in shaping the future of AI. Partner with SOAI to showcase your brand to top innovators, gain valuable exposure, and support the next generation of tech leaders.
             </p>
-
-            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
+              <a 
                 href="#about"
-                className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-md text-white font-semibold border-2 inline-block text-center transition-opacity hover:opacity-90"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-md font-semibold border-2 inline-block text-center transition-opacity hover:opacity-90"
                 style={{ borderColor: '#FF6B35', color: '#FF6B35' }}
               >
                 Learn More

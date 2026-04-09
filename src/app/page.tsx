@@ -82,9 +82,9 @@ export default function Home() {
       </div>
 
       {/* Speakers & Mentors Section */}
-      <div id="speakers">
+      {/* <div id="speakers">
         <Speakers />
-      </div>
+      </div> */}
 
 
 

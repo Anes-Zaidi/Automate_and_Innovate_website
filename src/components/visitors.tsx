@@ -14,13 +14,13 @@ export default function Visitors() {
 
         <Reveal direction="up" delay={0.4}>
           <h3 className="text-xl sm:text-2xl font-semibold text-white mb-6 sm:mb-8">
-            You wish to visit on the demo day?
+            Want to join us on Demo Day?
           </h3>
         </Reveal>
 
         <Reveal direction="up" delay={0.5}>
           <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-8 sm:mb-12 px-4">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Etiam eu turpis molestie, dictum est a, mattis tellus. Sed dignissim, metus nec fringilla accumsan, risus sem sollicitudin lacus, ut interdum tellus elit sed risus. Maecenas eget condimentum velit, sit amet feugiat lectus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent auctor purus luctus enim egestas, ac scelerisque ante pulvinar. Donec ut rhoncus ex. Suspendisse ac rhoncus nisl, eu tempor urma. Curabitur vel bibendum lorem.
+            Experience the future of AI firsthand! Join us on Demo Day to witness innovative projects, network with bright minds, and see the next big ideas in action. Whether you are an industry expert, a student, or simply an AI enthusiast, Demo Day is the perfect place to discover groundbreaking solutions.
           </p>
         </Reveal>
 
