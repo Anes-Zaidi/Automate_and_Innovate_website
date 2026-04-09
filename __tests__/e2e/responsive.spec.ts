@@ -45,7 +45,7 @@ test.describe('Responsive Design - Homepage', () => {
   test('countdown timer displays correctly on all screen sizes', async ({ page }) => {
     await page.goto('/')
 
-    for (const [_, size] of Object.entries(viewports)) {
+    for (const size of Object.values(viewports)) {
       await page.setViewportSize(size)
 
       const timerBoxes = page.locator('[role="timer"]')
@@ -60,7 +60,7 @@ test.describe('Responsive Design - Registration Page', () => {
     await page.setViewportSize(viewports.mobile)
 
     await expect(page.locator('input[placeholder="Afak"]')).toBeVisible()
-    await expect(page.locator('input[placeholder="Afak"]')).toHaveCSS('width', expect.stringMatching(/\d+px/))
+    await expect(page.locator('input[placeholder="Afak"]')).toHaveCSS('width', /\d+px/)
   })
 
   test('member form grid layout on desktop', async ({ page }) => {
@@ -110,7 +110,7 @@ test.describe('Responsive Design - Registration Page', () => {
   test('buttons are accessible on all screen sizes', async ({ page }) => {
     await page.goto('/register')
 
-    for (const [_, size] of Object.entries(viewports)) {
+    for (const size of Object.values(viewports)) {
       await page.setViewportSize(size)
 
       const buttons = page.locator('button')
