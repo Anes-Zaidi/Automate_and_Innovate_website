@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       phone_number: member.phoneNumber,
       university: member.university,
       specialty: member.specialty,
-      year: member.year,
+      role: member.role,
       is_team_leader: member.isTeamLeader,
     }))
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
           memberCount: insertedMembers.length,
           registeredAt: newTeam.created_at,
         },
-        members: insertedMembers.map((m) => ({
+        members: insertedMembers.map((m: any) => ({
           id: m.id,
           firstName: m.first_name,
           lastName: m.last_name,

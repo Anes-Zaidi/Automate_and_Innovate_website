@@ -47,14 +47,9 @@ export const teamMemberSchema = z.object({
     .min(2, 'Specialty must be at least 2 characters')
     .max(100, 'Specialty must not exceed 100 characters'),
 
-  year: z
-    .string()
-    .min(1, 'Academic year is required')
-    .regex(/^[0-9]{4}$/, 'Year must be a 4-digit number (e.g. 2024)')
-    .refine((val) => {
-      const year = parseInt(val, 10)
-      return year >= 2020 && year <= 2026
-    }, 'Year must be between 2020 and 2026'),
+  role: z.enum(['backend(n8n)', 'frontend'], {
+    message: 'Please select a valid role'
+  }),
 })
 
 /**

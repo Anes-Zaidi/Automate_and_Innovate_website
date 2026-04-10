@@ -15,7 +15,7 @@ type TeamMember = {
   phoneNumber: string
   university: string
   specialty: string
-  year: string
+  role: string
 }
 
 type FormData = {
@@ -35,7 +35,7 @@ const emptyMember: TeamMember = {
   phoneNumber: '',
   university: '',
   specialty: '',
-  year: '',
+  role: '',
 }
 
 const STORAGE_KEY = 'hackathon_registration_data'
@@ -71,7 +71,7 @@ export default function RegistrationForm() {
       const savedData = localStorage.getItem(STORAGE_KEY)
       if (savedData) {
         const parsed = JSON.parse(savedData)
-        setFormData(parsed.formData || formData)
+        setFormData(prev => parsed.formData || prev)
         setStep(parsed.step || 1)
       }
     } catch (error) {
@@ -142,17 +142,18 @@ export default function RegistrationForm() {
       newErrors['teamName'] = 'Team name must be at least 2 characters'
     }
 
-    try {
-      teamMemberSchema.parse(currentMember)
-    } catch (error: any) {
-      if (Array.isArray(error?.errors)) {
-        error.errors.forEach((err: any) => {
-          const field = err.path?.[0] || 'unknown'
-          newErrors[`${currentMemberKey}.${field}`] = err.message || 'Invalid value'
-        })
-      } else {
-        newErrors[`${currentMemberKey}.general`] = 'Invalid information provided'
-      }
+    if (step >= 3 && !isMemberStarted(currentMember)) {
+      // Optional member (3 or 4) and not started, so it's valid
+      setFieldErrors(newErrors)
+      return Object.keys(newErrors).length === 0
+    }
+
+    const result = teamMemberSchema.safeParse(currentMember)
+    if (!result.success) {
+      result.error.issues.forEach((err) => {
+        const field = String(err.path[0]) || 'general'
+        newErrors[`${currentMemberKey}.${field}`] = err.message || 'Invalid value'
+      })
     }
 
     setFieldErrors(newErrors)
@@ -162,6 +163,51 @@ export default function RegistrationForm() {
     }
     
     return Object.keys(newErrors).length === 0
+  }
+
+  const validateEntireForm = (): boolean => {
+    const allErrors: Record<string, string> = {}
+    let firstErrorStep = step
+
+    if (!formData.teamName || formData.teamName.trim().length < 2) {
+      allErrors['teamName'] = 'Team name must be at least 2 characters'
+      firstErrorStep = 1
+    }
+
+    const membersToValidate = [
+      { key: 'teamLeader', stepNum: 1 },
+      { key: 'member2', stepNum: 2 },
+    ]
+    
+    if (isMemberStarted(formData.member3 as TeamMember)) {
+      membersToValidate.push({ key: 'member3', stepNum: 3 })
+    }
+    
+    if (isMemberStarted(formData.member4 as TeamMember)) {
+      membersToValidate.push({ key: 'member4', stepNum: 4 })
+    }
+
+    membersToValidate.forEach(({ key, stepNum }) => {
+      const result = teamMemberSchema.safeParse(formData[key as keyof FormData])
+      if (!result.success) {
+        result.error.issues.forEach((err) => {
+          const field = String(err.path[0]) || 'general'
+          allErrors[`${key}.${field}`] = err.message || 'Invalid value'
+        })
+        if (firstErrorStep === step) firstErrorStep = stepNum
+        else if (stepNum < firstErrorStep) firstErrorStep = stepNum
+      }
+    })
+
+    setFieldErrors(allErrors)
+    
+    if (Object.keys(allErrors).length > 0) {
+      if (firstErrorStep !== step) setStep(firstErrorStep)
+      addToast('Please fix the errors highlighted below', 'error')
+      return false
+    }
+    
+    return true
   }
 
   const handleMemberSubmit = (e: FormEvent) => {
@@ -188,8 +234,8 @@ export default function RegistrationForm() {
   const handleSubmit = async (e?: FormEvent) => {
     if (e) e.preventDefault()
     
-    // Always validate the current step before submitting
-    if (!validateCurrentStep()) return
+    // Always validate the entire form before submitting
+    if (!validateEntireForm()) return
 
     setStatus('submitting')
     setErrorMessage('')
@@ -219,6 +265,24 @@ export default function RegistrationForm() {
       const data = await response.json()
 
       if (!response.ok) {
+        const validationErrors: Record<string, string> = {}
+        let hasFieldErrors = false
+
+        if (data.details && Array.isArray(data.details)) {
+          data.details.forEach((d: any) => {
+            if (d.path && d.path.length > 0) {
+              const fieldPath = d.path.join('.')
+              validationErrors[fieldPath] = d.message
+              hasFieldErrors = true
+            }
+          })
+        }
+
+        if (hasFieldErrors) {
+          setFieldErrors(validationErrors)
+          throw new Error('Please fix the errors highlighted in the form.')
+        }
+
         const errors = data.details?.map((d: any) => d.message).join(', ')
         throw new Error(errors || data.error || 'Registration failed')
       }
@@ -304,7 +368,7 @@ export default function RegistrationForm() {
             {/* Error Message Summary */}
             {status === 'error' && errorMessage && (
               <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="w-5 h-5 rounded-full bg-red-500 flex-shrink-0 flex items-center justify-center mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-red-500 shrink-0 flex items-center justify-center mt-0.5">
                   <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -417,18 +481,36 @@ export default function RegistrationForm() {
                 </Field>
               </div>
 
-              <Field label="Academic Year" error={getFieldError('year')} required>
-                <input
-                  type="number"
-                  value={currentMember.year}
-                  onChange={(e) => handleMemberChange('year', e.target.value)}
-                  placeholder="2022"
-                  disabled={status === 'submitting'}
-                  className={getInputClass(!!getFieldError('year'), 'orange')}
-                  min="2020"
-                  max="2026"
-                />
-              </Field>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <Field label="Role" error={getFieldError('role')} required>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleMemberChange('role', 'frontend')}
+                      disabled={status === 'submitting'}
+                      className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 border cursor-pointer ${
+                        currentMember.role === 'frontend'
+                          ? 'bg-[#F9621D]/10 border-[#F9621D] text-[#F9621D]'
+                          : 'bg-[#111316] border-white/10 text-gray-400 hover:border-white/20 hover:text-white'
+                      } ${!!getFieldError('role') && currentMember.role !== 'frontend' ? 'border-red-500/50 bg-red-500/5' : ''}`}
+                    >
+                      Frontend
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMemberChange('role', 'backend(n8n)')}
+                      disabled={status === 'submitting'}
+                      className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 border cursor-pointer ${
+                        currentMember.role === 'backend(n8n)'
+                          ? 'bg-[#F9621D]/10 border-[#F9621D] text-[#F9621D]'
+                          : 'bg-[#111316] border-white/10 text-gray-400 hover:border-white/20 hover:text-white'
+                      } ${!!getFieldError('role') && currentMember.role !== 'backend(n8n)' ? 'border-red-500/50 bg-red-500/5' : ''}`}
+                    >
+                      Backend (n8n)
+                    </button>
+                  </div>
+                </Field>
+              </div>
 
               {/* Actions */}
               <div className="flex items-center justify-between pt-2">
@@ -436,7 +518,7 @@ export default function RegistrationForm() {
                   type="button"
                   onClick={handleBack}
                   disabled={status === 'submitting' || step === 1}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                   style={{ border: '1px solid rgba(255,255,255,0.08)' }}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -451,7 +533,7 @@ export default function RegistrationForm() {
                       type="button"
                       onClick={() => handleSubmit()}
                       disabled={status === 'submitting'}
-                      className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-colors disabled:opacity-30"
+                      className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                       style={{ border: '1px solid rgba(255,255,255,0.08)' }}
                     >
                       Finish & Submit
@@ -461,7 +543,7 @@ export default function RegistrationForm() {
                   <button
                     type="submit"
                     disabled={status === 'submitting'}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-opacity hover:opacity-90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ backgroundColor: '#F9621D', color: '#0A0A0A' }}
                   >
                     {status === 'submitting' ? (

@@ -45,12 +45,12 @@ export function Field({
 }
 
 export const getInputClass = (hasError?: boolean, variant: 'default' | 'orange' = 'default') => {
-  const baseClasses = "w-full px-4 py-3 bg-[#111316] border rounded-lg text-white placeholder-gray-600 focus:outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+  const baseClasses = "w-full px-4 py-3 bg-[#111316] border rounded-lg text-white placeholder-gray-600 focus:outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm hover:border-white/20"
   
   const stateClasses = hasError
     ? "border-red-500/50 focus:border-red-400 bg-red-500/5 ring-1 ring-red-500/20"
     : variant === 'orange'
-      ? "border-white/10 focus:border-orange-500/60 hover:border-white/20"
+      ? "border-white/10 focus:border-orange-500/60"
       : "border-white/10 focus:border-white/20"
 
   return `${baseClasses} ${stateClasses}`

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState, FormEvent, useEffect } from 'react'
@@ -94,7 +95,7 @@ export default function VisitorRegistrationForm() {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {}
-        error.errors.forEach((err) => {
+        error.issues.forEach((err) => {
           if (err.path[0]) {
             newErrors[err.path[0] as string] = err.message
           }
@@ -102,8 +103,8 @@ export default function VisitorRegistrationForm() {
         setFieldErrors(newErrors)
         
         // Show the first error in a toast for quick feedback
-        if (error.errors[0]) {
-          addToast(error.errors[0].message, 'error')
+        if (error.issues[0]) {
+          addToast(error.issues[0].message, 'error')
         }
       }
       return false
