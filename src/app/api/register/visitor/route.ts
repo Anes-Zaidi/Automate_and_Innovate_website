@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getDb } from '@/lib/db'
-import { visitors } from '@/lib/db/schema'
+import { supabase } from '@/lib/supabase'
 import { visitorSchema } from '@/lib/validations/visitor'
 
 // Maximum request body size (10KB)
@@ -22,8 +21,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const db = getDb()
-
     // Parse and validate request body
     let body
     try {
@@ -38,39 +35,43 @@ export async function POST(request: NextRequest) {
     const validatedData = visitorSchema.parse(body)
 
     // Check if email already exists
-    try {
-      const existingVisitor = await db.query.visitors.findFirst({
-        where: (v, { eq }) => eq(v.email, validatedData.email),
-      })
+    const { data: existingVisitor, error: checkError } = await supabase
+      .from('visitors')
+      .select('id')
+      .eq('email', validatedData.email)
+      .maybeSingle()
 
-      if (existingVisitor) {
-        return NextResponse.json(
-          { error: 'A visitor with this email already exists' },
-          { status: 409 }
-        )
-      }
-    } catch (dbError) {
-      // Handle unique constraint violation
-      if (dbError instanceof Error && dbError.message.includes('unique constraint')) {
-        return NextResponse.json(
-          { error: 'A visitor with this email already exists' },
-          { status: 409 }
-        )
-      }
-      throw dbError
+    if (checkError) {
+      throw checkError
+    }
+
+    if (existingVisitor) {
+      return NextResponse.json(
+        { error: 'A visitor with this email already exists' },
+        { status: 409 }
+      )
     }
 
     // Insert visitor into database
-    const [newVisitor] = await db
-      .insert(visitors)
-      .values({
-        fullName: validatedData.fullName,
+    const { data: newVisitor, error: insertError } = await supabase
+      .from('visitors')
+      .insert({
+        full_name: validatedData.fullName,
         email: validatedData.email,
-        phoneNumber: validatedData.phoneNumber || null,
+        phone_number: validatedData.phoneNumber || null,
         organization: validatedData.organization,
-        visitDate: validatedData.visitDate,
+        visit_date: validatedData.visitDate,
       })
-      .returning()
+      .select()
+      .single()
+
+    if (insertError || !newVisitor) {
+      console.error('Visitor registration error:', insertError)
+      return NextResponse.json(
+        { error: 'Failed to complete registration' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(
       {
@@ -78,11 +79,11 @@ export async function POST(request: NextRequest) {
         message: 'Visitor registration successful',
         visitor: {
           id: newVisitor.id,
-          fullName: newVisitor.fullName,
+          fullName: newVisitor.full_name,
           email: newVisitor.email,
           organization: newVisitor.organization,
-          visitDate: newVisitor.visitDate,
-          registeredAt: newVisitor.registeredAt,
+          visitDate: newVisitor.visit_date,
+          registeredAt: newVisitor.registered_at,
         },
       },
       { status: 201 }
@@ -97,17 +98,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle database errors - don't leak details
-    if (error instanceof Error) {
-      console.error('Visitor registration error:', error)
-      return NextResponse.json(
-        { error: 'Failed to complete registration' },
-        { status: 500 }
-      )
-    }
-
+    console.error('Visitor registration error:', error)
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
     )
   }
 }
+

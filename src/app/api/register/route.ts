@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getDb } from '@/lib/db'
-import { teams, participants } from '@/lib/db/schema'
+import { supabase } from '@/lib/supabase'
 import { registrationSchema } from '@/lib/validations/registration'
 
 // Maximum request body size (10KB)
@@ -21,8 +20,6 @@ export async function POST(request: NextRequest) {
         { status: 413 }
       )
     }
-
-    const db = getDb()
 
     // Parse and validate request body
     let body
@@ -46,9 +43,15 @@ export async function POST(request: NextRequest) {
     ]
 
     for (const email of allEmails) {
-      const existingParticipant = await db.query.participants.findFirst({
-        where: (p, { eq }) => eq(p.email, email),
-      })
+      const { data: existingParticipant, error: checkError } = await supabase
+        .from('participants')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle()
+
+      if (checkError) {
+        throw checkError
+      }
 
       if (existingParticipant) {
         return NextResponse.json(
@@ -59,46 +62,54 @@ export async function POST(request: NextRequest) {
     }
 
     // Create team
-    const [newTeam] = await db
-      .insert(teams)
-      .values({
+    const { data: newTeam, error: teamError } = await supabase
+      .from('teams')
+      .insert({
         name: validatedData.teamName,
       })
-      .returning()
+      .select()
+      .single()
+
+    if (teamError || !newTeam) {
+      console.error('Team creation error:', teamError)
+      return NextResponse.json(
+        { error: 'Failed to create team' },
+        { status: 500 }
+      )
+    }
 
     // Add team members
-    const membersToInsert: Array<{
-      firstName: string
-      lastName: string
-      email: string
-      phoneNumber: string | null
-      university: string
-      specialty: string
-      year: string
-      isTeamLeader: boolean
-    }> = [
-      { ...validatedData.teamLeader, phoneNumber: validatedData.teamLeader.phoneNumber || null, isTeamLeader: true },
-      { ...validatedData.member2, phoneNumber: validatedData.member2.phoneNumber || null, isTeamLeader: false },
-      ...(validatedData.member3 ? [{ ...validatedData.member3, phoneNumber: validatedData.member3.phoneNumber || null, isTeamLeader: false }] : []),
-      ...(validatedData.member4 ? [{ ...validatedData.member4, phoneNumber: validatedData.member4.phoneNumber || null, isTeamLeader: false }] : []),
-    ]
+    const membersToInsert = [
+      { ...validatedData.teamLeader, phoneNumber: validatedData.teamLeader.phoneNumber || null, isTeamLeader: true, teamId: newTeam.id },
+      { ...validatedData.member2, phoneNumber: validatedData.member2.phoneNumber || null, isTeamLeader: false, teamId: newTeam.id },
+      ...(validatedData.member3 ? [{ ...validatedData.member3, phoneNumber: validatedData.member3.phoneNumber || null, isTeamLeader: false, teamId: newTeam.id }] : []),
+      ...(validatedData.member4 ? [{ ...validatedData.member4, phoneNumber: validatedData.member4.phoneNumber || null, isTeamLeader: false, teamId: newTeam.id }] : []),
+    ].map((member) => ({
+      team_id: member.teamId,
+      first_name: member.firstName,
+      last_name: member.lastName,
+      email: member.email,
+      phone_number: member.phoneNumber,
+      university: member.university,
+      specialty: member.specialty,
+      year: member.year,
+      is_team_leader: member.isTeamLeader,
+    }))
 
-    const insertedMembers = await db
-      .insert(participants)
-      .values(
-        membersToInsert.map((member) => ({
-          teamId: newTeam.id,
-          firstName: member.firstName,
-          lastName: member.lastName,
-          email: member.email,
-          phoneNumber: member.phoneNumber,
-          university: member.university,
-          specialty: member.specialty,
-          year: member.year,
-          isTeamLeader: member.isTeamLeader,
-        }))
+    const { data: insertedMembers, error: membersError } = await supabase
+      .from('participants')
+      .insert(membersToInsert)
+      .select()
+
+    if (membersError || !insertedMembers) {
+      console.error('Participants insertion error:', membersError)
+      // Rollback team creation if participants fail (Supabase doesn't have cross-request transactions easily without RPC)
+      // For now we'll just log and return error
+      return NextResponse.json(
+        { error: 'Failed to register team members' },
+        { status: 500 }
       )
-      .returning()
+    }
 
     return NextResponse.json(
       {
@@ -108,14 +119,14 @@ export async function POST(request: NextRequest) {
           id: newTeam.id,
           name: newTeam.name,
           memberCount: insertedMembers.length,
-          registeredAt: newTeam.createdAt,
+          registeredAt: newTeam.created_at,
         },
         members: insertedMembers.map((m) => ({
           id: m.id,
-          firstName: m.firstName,
-          lastName: m.lastName,
+          firstName: m.first_name,
+          lastName: m.last_name,
           email: m.email,
-          isTeamLeader: m.isTeamLeader,
+          isTeamLeader: m.is_team_leader,
         })),
       },
       { status: 201 }
@@ -130,17 +141,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle database errors - don't leak details
-    if (error instanceof Error) {
-      console.error('Registration error:', error)
-      return NextResponse.json(
-        { error: 'Failed to complete registration' },
-        { status: 500 }
-      )
-    }
-
+    console.error('Registration error:', error)
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
     )
   }
 }
+
