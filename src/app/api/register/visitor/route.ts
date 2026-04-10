@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (error) {
+  } catch (error: any) {
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -97,10 +97,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Handle database errors - don't leak details
+    // Handle Supabase/PostgreSQL errors
+    if (error.code === '23505') {
+       return NextResponse.json(
+         { error: 'A registration with this email already exists.' },
+         { status: 409 }
+       )
+    }
+
+    // Handle database connection or other structural errors
     console.error('Visitor registration error:', error)
     return NextResponse.json(
-      { error: 'An unexpected error occurred' },
+      { error: error.message || 'An unexpected error occurred. Please try again later.' },
       { status: 500 }
     )
   }

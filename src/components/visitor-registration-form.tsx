@@ -4,6 +4,9 @@ import { useState, FormEvent, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Reveal from '@/components/ui/reveal'
 import { useToast } from '@/components/ui/toast'
+import { visitorSchema } from '@/lib/validations/visitor'
+import { Field, getInputClass } from '@/components/ui/field'
+import { z } from 'zod'
 
 type FormData = {
   fullName: string
@@ -28,6 +31,7 @@ export default function VisitorRegistrationForm() {
 
   const [status, setStatus] = useState<FormStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [csrfToken, setCsrfToken] = useState<string>('')
 
   // Fetch CSRF token on component mount
@@ -58,7 +62,15 @@ export default function VisitorRegistrationForm() {
       ...prev,
       [name]: value,
     }))
-    // Don't validate on typing - only on submit
+    
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const next = { ...prev }
+        delete next[name]
+        return next
+      })
+    }
   }
 
   const handleCancel = () => {
@@ -71,54 +83,40 @@ export default function VisitorRegistrationForm() {
     })
     setStatus('idle')
     setErrorMessage('')
+    setFieldErrors({})
+  }
+
+  const validate = (): boolean => {
+    try {
+      visitorSchema.parse(formData)
+      setFieldErrors({})
+      return true
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {}
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message
+          }
+        })
+        setFieldErrors(newErrors)
+        
+        // Show the first error in a toast for quick feedback
+        if (error.errors[0]) {
+          addToast(error.errors[0].message, 'error')
+        }
+      }
+      return false
+    }
   }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    
+    if (!validate()) return
+
     setStatus('submitting')
     setErrorMessage('')
-
-    // Validate all required fields
-    const errors: string[] = []
-
-    // Validate full name
-    if (!formData.fullName || formData.fullName.trim().length < 2) {
-      errors.push('Full name must be at least 2 characters')
-    }
-
-    // Validate email
-    if (!formData.email || !formData.email.includes('@') || !formData.email.includes('.')) {
-      errors.push('Please enter a valid email address')
-    }
-
-    // Validate phone number (if provided)
-    if (formData.phoneNumber) {
-      const cleaned = formData.phoneNumber.replace(/[\s\-.]/g, '')
-      const mobileRegex = /^(0[567]\d{8}|\+213[567]\d{8})$/
-      const landlineRegex = /^(0[234]\d{8}|\+213[234]\d{8})$/
-      if (!mobileRegex.test(cleaned) && !landlineRegex.test(cleaned)) {
-        errors.push('Please enter a valid Algerian phone number (e.g., 05XX XX XX XX or +213 5XX XX XX XX)')
-      }
-    }
-
-    // Validate organization
-    if (!formData.organization || formData.organization.trim().length < 2) {
-      errors.push('Organization name must be at least 2 characters')
-    }
-
-    // Validate visit date
-    if (!formData.visitDate) {
-      errors.push('Please select a visit date')
-    }
-
-    // Show all errors in toast
-    if (errors.length > 0) {
-      errors.forEach((error) => {
-        addToast(error, 'error')
-      })
-      setStatus('idle')
-      return
-    }
 
     try {
       const response = await fetch('/api/register/visitor', {
@@ -134,9 +132,13 @@ export default function VisitorRegistrationForm() {
 
       if (!response.ok) {
         if (data.details && Array.isArray(data.details)) {
-          // Format validation errors
-          const errors = data.details.map((d: any) => d.message).join(', ')
-          throw new Error(errors)
+          // Map backend validation errors back to fields
+          const newErrors: Record<string, string> = {}
+          data.details.forEach((d: any) => {
+            if (d.path[0]) newErrors[d.path[0]] = d.message
+          })
+          setFieldErrors(newErrors)
+          throw new Error('Please fix the errors below')
         }
         throw new Error(data.error || 'Registration failed')
       }
@@ -197,87 +199,82 @@ export default function VisitorRegistrationForm() {
         <form onSubmit={handleSubmit}>
           {/* Full Name */}
           <Reveal direction="up" delay={0.3}>
-            <div className="mb-8">
-              <label className="block text-white text-sm font-medium mb-3">Full Name</label>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="John Doe"
-                disabled={status === 'submitting'}
-                className="w-full px-4 py-3  border-2 border-orange-500 bg-[#1A1D21]   text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              />
+            <div className="mb-10">
+              <Field label="Full Name" error={fieldErrors.fullName} required>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  placeholder="e.g. Zakaria Tikialine"
+                  disabled={status === 'submitting'}
+                  className={getInputClass(!!fieldErrors.fullName, 'orange')}
+                />
+              </Field>
             </div>
           </Reveal>
-
+ 
           {/* Contact Information */}
           <Reveal direction="up" delay={0.4}>
-            <div className="mb-8">
-              <h2 className="text-white text-sm font-medium mb-6 flex items-center">
-                <span className="mr-2">•</span>
-                Contact Information
-              </h2>
-
-              {/* Email and Phone Number */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-white text-sm font-medium mb-3">Email</label>
+            <div className="mb-10 p-8 rounded-xl bg-[#0E1013] border border-white/5">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-1 h-5 rounded-full bg-orange-500" />
+                <h2 className="text-white font-semibold text-base">Contact Information</h2>
+              </div>
+ 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8">
+                <Field label="Email Address" error={fieldErrors.email} required>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="john@example.com"
+                    placeholder="exemple@estin.dz"
                     disabled={status === 'submitting'}
-                    className="w-full px-4 py-3  border-2 border-orange-500 bg-[#1A1D21]   text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={getInputClass(!!fieldErrors.email, 'orange')}
                   />
-                </div>
-                <div>
-                  <label className="block text-white text-sm font-medium mb-3">Phone Number</label>
+                </Field>
+                <Field label="Phone Number" error={fieldErrors.phoneNumber}>
                   <input
                     type="tel"
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleChange}
-                    placeholder="05XX XX XX XX"
+                    placeholder="05XXXXXXXX"
                     disabled={status === 'submitting'}
-                    className="w-full px-4 py-3  border-2 border-orange-500 bg-[#1A1D21]   text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={getInputClass(!!fieldErrors.phoneNumber, 'orange')}
                   />
-                </div>
+                </Field>
               </div>
-
-              {/* Organization */}
-              <div className="mb-6">
-                <label className="block text-white text-sm font-medium mb-3">Organization</label>
-                <input
-                  type="text"
-                  name="organization"
-                  value={formData.organization}
-                  onChange={handleChange}
-                  placeholder="Company or University"
-                  disabled={status === 'submitting'}
-                  className="w-full px-4 py-3  border-2 border-orange-500 bg-[#1A1D21]   text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-
-              {/* Visit Date */}
-              <div className="mb-8">
-                <label className="block text-white text-sm font-medium mb-3">Visit Date</label>
-                <select
-                  name="visitDate"
-                  value={formData.visitDate}
-                  onChange={handleChange}
-                  disabled={status === 'submitting'}
-                  className="w-full px-4 py-3  border-2 border-orange-500 bg-[#1A1D21]   text-white focus:outline-none focus:border-orange-400 transition disabled:opacity-50 disabled:cursor-not-allowed [&>option]:bg-[#0C0F14]"
-                >
-                  <option value="" disabled>Select a date</option>
-                  {dateOptions.map((date) => (
-                    <option key={date.value} value={date.value}>
-                      {date.label}
-                    </option>
-                  ))}
-                </select>
+ 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <Field label="Organization" error={fieldErrors.organization} required>
+                  <input
+                    type="text"
+                    name="organization"
+                    value={formData.organization}
+                    onChange={handleChange}
+                    placeholder="Company or University"
+                    disabled={status === 'submitting'}
+                    className={getInputClass(!!fieldErrors.organization, 'orange')}
+                  />
+                </Field>
+                <Field label="Visit Date" error={fieldErrors.visitDate} required>
+                  <select
+                    name="visitDate"
+                    value={formData.visitDate}
+                    onChange={handleChange}
+                    disabled={status === 'submitting'}
+                    className={getInputClass(!!fieldErrors.visitDate, 'orange')}
+                  >
+                    <option value="" disabled>Select a date</option>
+                    {dateOptions.map((date) => (
+                      <option key={date.value} value={date.value}>
+                        {date.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
               </div>
             </div>
           </Reveal>

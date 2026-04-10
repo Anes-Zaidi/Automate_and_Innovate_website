@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (error) {
+  } catch (error: any) {
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -140,10 +140,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Handle database errors - don't leak details
-    console.error('Registration error:', error)
+    // Handle Supabase/PostgreSQL errors
+    if (error.code === '23505') {
+      return NextResponse.json(
+        { error: 'Conflict: One or more entries (email or team name) already exist in our system.' },
+        { status: 409 }
+      )
+    }
+
+    if (error.code === '42P01') {
+      return NextResponse.json(
+        { error: 'Server Configuration Error: The database table was not found. Please contact support.' },
+        { status: 500 }
+      )
+    }
+
+    // Handle database connection or other structural errors
+    console.error('Registration processing error:', error)
     return NextResponse.json(
-      { error: 'An unexpected error occurred' },
+      { error: error.message || 'An unexpected error occurred during registration. Please try again.' },
       { status: 500 }
     )
   }
